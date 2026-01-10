@@ -9,6 +9,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
 import Listings from "@/pages/Listings";
+import ListingDetail from "@/pages/ListingDetail";
 import ListingForm from "@/pages/ListingForm";
 import Analytics from "@/pages/Analytics";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,16 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardLayout>
                     <Listings />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/listings/:id"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ListingDetail />
                   </DashboardLayout>
                 </ProtectedRoute>
               }
