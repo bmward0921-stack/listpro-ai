@@ -1,6 +1,7 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useListings } from '@/hooks/useListings';
 import { useActivityLog } from '@/hooks/useActivityLog';
+import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ import {
   Clock,
   TrendingUp,
   CheckCircle,
+  Receipt,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
@@ -42,6 +44,7 @@ const ListingDetail = () => {
   const navigate = useNavigate();
   const { listings, loading, deleteListing, updatePlatformStatus } = useListings();
   const { activities, loading: activitiesLoading, logActivity } = useActivityLog(id);
+  const { calculatePlatformFee, calculateNetRevenue, getPlatformFee } = useAdminSettings();
   
   const listing = listings.find((l) => l.$id === id);
 
@@ -90,12 +93,18 @@ const ListingDetail = () => {
     );
   }
 
-  const totalRevenue = listing.platforms
-    .filter((p) => p.status === 'sold')
-    .reduce((sum, p) => sum + p.price, 0);
-
+  const soldPlatforms = listing.platforms.filter((p) => p.status === 'sold');
+  
+  const totalGrossRevenue = soldPlatforms.reduce((sum, p) => sum + p.price, 0);
+  
+  const totalFees = soldPlatforms.reduce(
+    (sum, p) => sum + calculatePlatformFee(p.platform, p.price), 
+    0
+  );
+  
+  const totalRevenue = totalGrossRevenue - totalFees;
   const profit = totalRevenue - listing.costPrice;
-  const profitMargin = totalRevenue > 0 ? ((profit / totalRevenue) * 100).toFixed(1) : '0';
+  const profitMargin = totalGrossRevenue > 0 ? ((profit / totalGrossRevenue) * 100).toFixed(1) : '0';
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -252,23 +261,38 @@ const ListingDetail = () => {
                   <Tag className="h-4 w-4" />
                   Cost Price
                 </span>
-                <span className="font-semibold">${listing.costPrice}</span>
+                <span className="font-semibold">${listing.costPrice.toFixed(2)}</span>
               </div>
               <Separator />
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2 text-muted-foreground">
                   <DollarSign className="h-4 w-4" />
-                  Revenue
+                  Gross Revenue
                 </span>
-                <span className="font-semibold text-green-600">${totalRevenue}</span>
+                <span className="font-semibold">${totalGrossRevenue.toFixed(2)}</span>
               </div>
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <Receipt className="h-4 w-4" />
+                  Platform Fees
+                </span>
+                <span className="font-semibold text-orange-600">-${totalFees.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 text-muted-foreground">
+                  <DollarSign className="h-4 w-4" />
+                  Net Revenue
+                </span>
+                <span className="font-semibold text-green-600">${totalRevenue.toFixed(2)}</span>
+              </div>
+              <Separator />
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2 text-muted-foreground">
                   <TrendingUp className="h-4 w-4" />
                   Profit
                 </span>
                 <span className={`font-semibold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {profit >= 0 ? '+' : ''}${profit}
+                  {profit >= 0 ? '+' : ''}${profit.toFixed(2)}
                 </span>
               </div>
               <div className="flex items-center justify-between">

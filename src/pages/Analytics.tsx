@@ -1,4 +1,5 @@
 import { useListings, useListingStats } from '@/hooks/useListings';
+import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { PLATFORM_LABELS, Platform } from '@/types/listing';
 import PlatformBadge from '@/components/PlatformBadge';
 import {
@@ -15,7 +16,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { TrendingUp, DollarSign, Percent, ShoppingBag } from 'lucide-react';
+import { TrendingUp, DollarSign, Percent, ShoppingBag, Receipt } from 'lucide-react';
 import StatCard from '@/components/ui/stat-card';
 
 const PLATFORM_COLORS: Record<Platform, string> = {
@@ -27,10 +28,13 @@ const PLATFORM_COLORS: Record<Platform, string> = {
 const Analytics = () => {
   const { listings, loading } = useListings();
   const stats = useListingStats(listings);
+  const { calculatePlatformFee } = useAdminSettings();
 
   // Prepare data for charts
   const platformRevenueData = Object.entries(stats.platformBreakdown).map(([platform, data]) => ({
     name: PLATFORM_LABELS[platform as Platform],
+    grossRevenue: data.grossRevenue,
+    fees: data.fees,
     revenue: data.revenue,
     sold: data.sold,
     platform: platform as Platform,
@@ -65,15 +69,19 @@ const Analytics = () => {
     .sort((a, b) => b.revenue - a.revenue)
     .slice(0, 5);
 
-  // Top selling items
+  // Top selling items with platform fees
   const topSelling = listings
     .map((listing) => {
       const soldPlatforms = listing.platforms.filter((p) => p.status === 'sold');
-      const totalRevenue = soldPlatforms.reduce((sum, p) => sum + p.price, 0);
-      const profit = totalRevenue - (soldPlatforms.length > 0 ? listing.costPrice : 0);
+      const grossRevenue = soldPlatforms.reduce((sum, p) => sum + p.price, 0);
+      const fees = soldPlatforms.reduce((sum, p) => sum + calculatePlatformFee(p.platform, p.price), 0);
+      const netRevenue = grossRevenue - fees;
+      const profit = netRevenue - (soldPlatforms.length > 0 ? listing.costPrice : 0);
       return {
         ...listing,
-        totalRevenue,
+        grossRevenue,
+        fees,
+        totalRevenue: netRevenue,
         profit,
         soldCount: soldPlatforms.length,
       };
@@ -105,21 +113,30 @@ const Analytics = () => {
       </div>
 
       {/* Key Metrics */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
-          title="Total Revenue"
+          title="Gross Revenue"
+          value={`$${stats.totalGrossRevenue.toLocaleString()}`}
+          subtitle="Before fees"
+          icon={DollarSign}
+        />
+        <StatCard
+          title="Platform Fees"
+          value={`$${stats.totalFees.toLocaleString()}`}
+          subtitle="Total deducted"
+          icon={Receipt}
+        />
+        <StatCard
+          title="Net Revenue"
           value={`$${stats.totalRevenue.toLocaleString()}`}
+          subtitle="After fees"
           icon={DollarSign}
         />
         <StatCard
           title="Total Profit"
           value={`$${stats.totalProfit.toLocaleString()}`}
+          subtitle={`${profitMargin}% margin`}
           icon={TrendingUp}
-        />
-        <StatCard
-          title="Profit Margin"
-          value={`${profitMargin}%`}
-          icon={Percent}
         />
         <StatCard
           title="Items Sold"
@@ -289,16 +306,18 @@ const Analytics = () => {
       {/* Platform Summary Table */}
       <div className="rounded-xl border border-border bg-card p-6">
         <h2 className="text-lg font-semibold">Platform Summary</h2>
-        <p className="text-sm text-muted-foreground">Detailed breakdown by platform</p>
+        <p className="text-sm text-muted-foreground">Detailed breakdown by platform (including fees)</p>
         
         <div className="mt-4 overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
                 <th className="py-3 text-left text-sm font-medium text-muted-foreground">Platform</th>
-                <th className="py-3 text-right text-sm font-medium text-muted-foreground">Total Listed</th>
+                <th className="py-3 text-right text-sm font-medium text-muted-foreground">Listed</th>
                 <th className="py-3 text-right text-sm font-medium text-muted-foreground">Sold</th>
-                <th className="py-3 text-right text-sm font-medium text-muted-foreground">Revenue</th>
+                <th className="py-3 text-right text-sm font-medium text-muted-foreground">Gross</th>
+                <th className="py-3 text-right text-sm font-medium text-muted-foreground">Fees</th>
+                <th className="py-3 text-right text-sm font-medium text-muted-foreground">Net Revenue</th>
                 <th className="py-3 text-right text-sm font-medium text-muted-foreground">Conversion</th>
               </tr>
             </thead>
@@ -310,7 +329,9 @@ const Analytics = () => {
                   </td>
                   <td className="py-3 text-right font-medium">{data.total}</td>
                   <td className="py-3 text-right font-medium">{data.sold}</td>
-                  <td className="py-3 text-right font-medium">${data.revenue.toLocaleString()}</td>
+                  <td className="py-3 text-right font-medium">${data.grossRevenue.toLocaleString()}</td>
+                  <td className="py-3 text-right font-medium text-orange-600">-${data.fees.toFixed(2)}</td>
+                  <td className="py-3 text-right font-medium text-green-600">${data.revenue.toFixed(2)}</td>
                   <td className="py-3 text-right font-medium">
                     {data.total > 0 ? ((data.sold / data.total) * 100).toFixed(0) : 0}%
                   </td>

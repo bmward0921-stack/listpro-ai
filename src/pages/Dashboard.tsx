@@ -4,7 +4,7 @@ import StatCard from '@/components/ui/stat-card';
 import PlatformBadge from '@/components/PlatformBadge';
 import ActivityFeed from '@/components/ActivityFeed';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, TrendingUp, DollarSign, ShoppingBag } from 'lucide-react';
+import { Package, TrendingUp, DollarSign, ShoppingBag, Receipt } from 'lucide-react';
 import { PLATFORM_LABELS, Platform } from '@/types/listing';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Link } from 'react-router-dom';
@@ -45,7 +45,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           title="Total Listings"
           value={stats.totalListings}
@@ -65,7 +65,13 @@ const Dashboard = () => {
           icon={TrendingUp}
         />
         <StatCard
-          title="Total Revenue"
+          title="Platform Fees"
+          value={`$${stats.totalFees.toLocaleString()}`}
+          subtitle="Total deducted"
+          icon={Receipt}
+        />
+        <StatCard
+          title="Net Revenue"
           value={`$${stats.totalRevenue.toLocaleString()}`}
           subtitle={`Profit: $${stats.totalProfit.toLocaleString()}`}
           icon={DollarSign}
@@ -133,7 +139,7 @@ const Dashboard = () => {
       {/* Platform Performance */}
       <div className="rounded-xl border border-border bg-card p-6">
         <h2 className="text-lg font-semibold">Platform Performance</h2>
-        <p className="text-sm text-muted-foreground">Revenue and sales by platform</p>
+        <p className="text-sm text-muted-foreground">Net revenue and sales by platform (after fees)</p>
         
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           {Object.entries(stats.platformBreakdown).map(([platform, data]) => (
@@ -143,7 +149,10 @@ const Dashboard = () => {
             >
               <PlatformBadge platform={platform as Platform} />
               <div className="mt-3 space-y-1">
-                <p className="text-2xl font-bold">${data.revenue.toLocaleString()}</p>
+                <p className="text-2xl font-bold">${data.revenue.toFixed(2)}</p>
+                <p className="text-xs text-orange-600">
+                  -${data.fees.toFixed(2)} fees
+                </p>
                 <p className="text-sm text-muted-foreground">
                   {data.sold} sold of {data.total} listed
                 </p>
