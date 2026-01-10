@@ -1,11 +1,13 @@
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useListings } from '@/hooks/useListings';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import PlatformBadge from '@/components/PlatformBadge';
 import StatusBadge from '@/components/StatusBadge';
+import ActivityFeed from '@/components/ActivityFeed';
 import { PLATFORM_LABELS, STATUS_LABELS, Platform } from '@/types/listing';
 import {
   ArrowLeft,
@@ -38,12 +40,15 @@ const ListingDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { listings, loading, deleteListing, updatePlatformStatus } = useListings();
+  const { activities, loading: activitiesLoading, logActivity } = useActivityLog(id);
   
   const listing = listings.find((l) => l.$id === id);
 
   const handleDelete = async () => {
-    if (!id) return;
+    if (!id || !listing) return;
+    const title = listing.title;
     try {
+      await logActivity('deleted', id, title, 'Listing was deleted');
       await deleteListing(id);
       toast({ title: 'Listing deleted', description: 'The listing has been removed.' });
       navigate('/listings');
@@ -53,9 +58,10 @@ const ListingDetail = () => {
   };
 
   const handleMarkSold = async (platform: Platform) => {
-    if (!id) return;
+    if (!id || !listing) return;
     try {
       await updatePlatformStatus(id, platform, 'sold');
+      await logActivity('status_changed', id, listing.title, `Marked as sold on ${PLATFORM_LABELS[platform]}`, 'available', 'sold');
       toast({ title: 'Marked as sold', description: `Item marked as sold on ${PLATFORM_LABELS[platform]}.` });
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to update status.', variant: 'destructive' });
@@ -294,30 +300,39 @@ const ListingDetail = () => {
             </CardContent>
           </Card>
 
-          {/* Activity */}
+          {/* Activity History */}
           <Card>
             <CardHeader>
-              <CardTitle>Activity</CardTitle>
+              <CardTitle>Activity History</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Created</p>
-                  <p className="text-muted-foreground">
-                    {format(new Date(listing.$createdAt), 'MMM d, yyyy h:mm a')}
-                  </p>
+            <CardContent>
+              <div className="mb-4 space-y-4">
+                <div className="flex items-center gap-3 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Created</p>
+                    <p className="text-muted-foreground">
+                      {format(new Date(listing.$createdAt), 'MMM d, yyyy h:mm a')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Last Updated</p>
+                    <p className="text-muted-foreground">
+                      {formatDistanceToNow(new Date(listing.$updatedAt), { addSuffix: true })}
+                    </p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 text-sm">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">Last Updated</p>
-                  <p className="text-muted-foreground">
-                    {formatDistanceToNow(new Date(listing.$updatedAt), { addSuffix: true })}
-                  </p>
-                </div>
-              </div>
+              <Separator className="my-4" />
+              <ActivityFeed 
+                activities={activities} 
+                loading={activitiesLoading}
+                showListingLink={false}
+                maxItems={5}
+              />
             </CardContent>
           </Card>
         </div>

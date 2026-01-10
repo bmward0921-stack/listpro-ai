@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useListings } from '@/hooks/useListings';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +27,7 @@ const ListingForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { listings, createListing, updateListing } = useListings();
+  const { logActivity } = useActivityLog();
   const isEditing = !!id;
   const existingListing = listings.find((l) => l.$id === id);
 
@@ -84,9 +86,11 @@ const ListingForm = () => {
 
       if (isEditing && id) {
         await updateListing(id, listingData);
+        await logActivity('updated', id, formData.title, 'Updated listing details');
         toast({ title: 'Success', description: 'Listing updated successfully.' });
       } else {
-        await createListing(listingData);
+        const newListing = await createListing(listingData);
+        await logActivity('created', newListing.$id, formData.title, `Listed on ${platforms.map(p => PLATFORM_LABELS[p.platform]).join(', ')}`);
         toast({ title: 'Success', description: 'Listing created successfully.' });
       }
 

@@ -1,12 +1,13 @@
 import { useListings, useListingStats } from '@/hooks/useListings';
+import { useActivityLog } from '@/hooks/useActivityLog';
 import StatCard from '@/components/ui/stat-card';
 import PlatformBadge from '@/components/PlatformBadge';
-import StatusBadge from '@/components/StatusBadge';
+import ActivityFeed from '@/components/ActivityFeed';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, TrendingUp, DollarSign, ShoppingBag } from 'lucide-react';
 import { PLATFORM_LABELS, Platform } from '@/types/listing';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Link } from 'react-router-dom';
-import { formatDistanceToNow } from 'date-fns';
 
 const PLATFORM_COLORS: Record<Platform, string> = {
   facebook: '#3b82f6',
@@ -16,6 +17,7 @@ const PLATFORM_COLORS: Record<Platform, string> = {
 
 const Dashboard = () => {
   const { listings, loading } = useListings();
+  const { activities, loading: activitiesLoading } = useActivityLog();
   const stats = useListingStats(listings);
 
   const pieData = Object.entries(stats.platformBreakdown).map(([platform, data]) => ({
@@ -23,18 +25,6 @@ const Dashboard = () => {
     value: data.total,
     color: PLATFORM_COLORS[platform as Platform],
   }));
-
-  const recentActivity = listings
-    .flatMap(listing =>
-      listing.platforms.map(p => ({
-        listing,
-        platform: p,
-        date: p.soldAt || p.listedAt || listing.$createdAt,
-        type: p.soldAt ? 'sold' : 'listed',
-      }))
-    )
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 5);
 
   if (loading) {
     return (
@@ -124,50 +114,20 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Recent Activity */}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <h2 className="text-lg font-semibold">Recent Activity</h2>
-          <p className="text-sm text-muted-foreground">Latest updates on your listings</p>
-          
-          <div className="mt-4 space-y-4">
-            {recentActivity.length > 0 ? (
-              recentActivity.map((activity, index) => (
-                <Link
-                  key={`${activity.listing.$id}-${activity.platform.platform}-${index}`}
-                  to={`/listings/${activity.listing.$id}`}
-                  className="flex items-center gap-4 rounded-lg p-2 transition-colors hover:bg-muted/50"
-                >
-                  {activity.listing.imageUrl ? (
-                    <img
-                      src={activity.listing.imageUrl}
-                      alt={activity.listing.title}
-                      className="h-12 w-12 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
-                      <Package className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate font-medium">{activity.listing.title}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <PlatformBadge platform={activity.platform.platform} />
-                      <StatusBadge status={activity.platform.status} />
-                    </div>
-                  </div>
-                  <div className="text-right text-xs text-muted-foreground">
-                    <p>{activity.type === 'sold' ? 'Sold' : 'Listed'}</p>
-                    <p>{formatDistanceToNow(new Date(activity.date), { addSuffix: true })}</p>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <div className="flex h-40 items-center justify-center text-muted-foreground">
-                No activity yet
-              </div>
-            )}
-          </div>
-        </div>
+        {/* Team Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Team Activity</CardTitle>
+            <p className="text-sm text-muted-foreground">Recent changes by team members</p>
+          </CardHeader>
+          <CardContent>
+            <ActivityFeed 
+              activities={activities} 
+              loading={activitiesLoading} 
+              maxItems={5}
+            />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Platform Performance */}
