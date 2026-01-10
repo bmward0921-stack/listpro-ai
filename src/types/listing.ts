@@ -17,6 +17,8 @@ export interface Listing {
   $updatedAt: string;
   title: string;
   description: string;
+  images: string[];
+  /** @deprecated Use images array instead */
   imageUrl?: string;
   category: string;
   costPrice: number;
@@ -29,6 +31,8 @@ export interface Listing {
 export interface ListingFormData {
   title: string;
   description: string;
+  images: string[];
+  /** @deprecated Use images array instead */
   imageUrl?: string;
   category: string;
   costPrice: number;
@@ -36,6 +40,14 @@ export interface ListingFormData {
   quantity: number;
   platforms: PlatformListing[];
 }
+
+// Helper to get primary image (first image or legacy imageUrl)
+export const getPrimaryImage = (listing: Listing | ListingFormData): string | undefined => {
+  if (listing.images && listing.images.length > 0) {
+    return listing.images[0];
+  }
+  return listing.imageUrl;
+};
 
 export const PLATFORM_LABELS: Record<Platform, string> = {
   facebook: 'Facebook Marketplace',

@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import PlatformBadge from '@/components/PlatformBadge';
 import StatusBadge from '@/components/StatusBadge';
-import { Platform, ListingStatus, PLATFORM_LABELS, STATUS_LABELS } from '@/types/listing';
+import { Platform, ListingStatus, PLATFORM_LABELS, STATUS_LABELS, getPrimaryImage } from '@/types/listing';
 import {
   Plus,
   Search,
@@ -196,9 +196,9 @@ const Listings = () => {
                 <TableRow key={listing.$id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      {listing.imageUrl ? (
+                      {getPrimaryImage(listing) ? (
                         <img
-                          src={listing.imageUrl}
+                          src={getPrimaryImage(listing)}
                           alt={listing.title}
                           className="h-10 w-10 rounded-lg object-cover"
                         />

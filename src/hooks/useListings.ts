@@ -26,10 +26,11 @@ export const useListings = () => {
         [Query.orderDesc('$createdAt')]
       );
       
-      // Parse platforms JSON string back to array if stored as string
+      // Parse JSON strings back to arrays
       const parsedListings = response.documents.map((doc: any) => ({
         ...doc,
         platforms: typeof doc.platforms === 'string' ? JSON.parse(doc.platforms) : doc.platforms,
+        images: typeof doc.images === 'string' ? JSON.parse(doc.images) : (doc.images || []),
       })) as Listing[];
       
       setListings(parsedListings);
@@ -49,10 +50,11 @@ export const useListings = () => {
       throw new Error('Appwrite database configuration missing');
     }
 
-    // Appwrite requires platforms to be stored as JSON string if it's a complex array
+    // Appwrite requires complex arrays to be stored as JSON strings
     const documentData = {
       ...data,
       platforms: JSON.stringify(data.platforms),
+      images: JSON.stringify(data.images || []),
       userId: user?.$id || '',
     };
 
@@ -66,6 +68,7 @@ export const useListings = () => {
     const newListing = {
       ...response,
       platforms: data.platforms,
+      images: data.images || [],
     } as unknown as Listing;
 
     setListings(prev => [newListing, ...prev]);
@@ -81,6 +84,9 @@ export const useListings = () => {
     if (data.platforms) {
       updateData.platforms = JSON.stringify(data.platforms);
     }
+    if (data.images) {
+      updateData.images = JSON.stringify(data.images);
+    }
 
     const response = await databases.updateDocument(
       APPWRITE_DATABASE_ID,
@@ -92,6 +98,7 @@ export const useListings = () => {
     const updatedListing = {
       ...response,
       platforms: data.platforms || (typeof response.platforms === 'string' ? JSON.parse(response.platforms) : response.platforms),
+      images: data.images || (typeof response.images === 'string' ? JSON.parse(response.images) : (response.images || [])),
     } as unknown as Listing;
 
     setListings(prev => prev.map(l => l.$id === id ? updatedListing : l));

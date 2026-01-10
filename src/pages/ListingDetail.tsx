@@ -8,7 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import PlatformBadge from '@/components/PlatformBadge';
 import StatusBadge from '@/components/StatusBadge';
 import ActivityFeed from '@/components/ActivityFeed';
-import { PLATFORM_LABELS, STATUS_LABELS, Platform } from '@/types/listing';
+import ImageGallery from '@/components/ImageGallery';
+import { PLATFORM_LABELS, STATUS_LABELS, Platform, getPrimaryImage } from '@/types/listing';
 import {
   ArrowLeft,
   Pencil,
@@ -152,17 +153,13 @@ const ListingDetail = () => {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Content */}
         <div className="space-y-6 lg:col-span-2">
-          {/* Product Image */}
+          {/* Product Images */}
           <Card>
-            <CardContent className="p-0">
-              {listing.imageUrl ? (
-                <img
-                  src={listing.imageUrl}
+            <CardContent className="p-4">
+              {(listing.images?.length > 0 || listing.imageUrl) ? (
+                <ImageGallery 
+                  images={listing.images?.length > 0 ? listing.images : [listing.imageUrl!]} 
                   alt={listing.title}
-                  className="aspect-video w-full rounded-lg object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder.svg';
-                  }}
                 />
               ) : (
                 <div className="flex aspect-video items-center justify-center rounded-lg bg-muted">

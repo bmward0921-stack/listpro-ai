@@ -19,7 +19,8 @@ import { Platform, PlatformListing, PLATFORM_LABELS, CATEGORIES } from '@/types/
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-import ImageUpload from '@/components/ImageUpload';
+import MultiImageUpload from '@/components/MultiImageUpload';
+import { getPrimaryImage } from '@/types/listing';
 
 const PLATFORMS: Platform[] = ['facebook', 'poshmark', 'squarespace'];
 
@@ -31,11 +32,18 @@ const ListingForm = () => {
   const isEditing = !!id;
   const existingListing = listings.find((l) => l.$id === id);
 
+  // Support legacy imageUrl by converting to images array
+  const existingImages = existingListing?.images?.length 
+    ? existingListing.images 
+    : existingListing?.imageUrl 
+      ? [existingListing.imageUrl] 
+      : [];
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: existingListing?.title || '',
     description: existingListing?.description || '',
-    imageUrl: existingListing?.imageUrl || '',
+    images: existingImages,
     category: existingListing?.category || '',
     costPrice: existingListing?.costPrice || 0,
     sku: existingListing?.sku || '',
@@ -154,9 +162,10 @@ const ListingForm = () => {
               />
             </div>
 
-            <ImageUpload
-              value={formData.imageUrl}
-              onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+            <MultiImageUpload
+              value={formData.images}
+              onChange={(images) => setFormData({ ...formData, images })}
+              maxImages={10}
             />
 
             <div className="grid gap-4 sm:grid-cols-2">
