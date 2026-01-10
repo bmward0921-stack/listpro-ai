@@ -285,7 +285,23 @@ const ListingForm = () => {
                             },
                           })
                         }
-                        placeholder="https://..."
+                        placeholder={
+                          platform === 'poshmark' 
+                            ? 'https://poshmark.com/listing/...' 
+                            : platform === 'facebook'
+                            ? 'https://facebook.com/marketplace/...'
+                            : 'https://...'
+                        }
+                        pattern={
+                          platform === 'poshmark' 
+                            ? 'https://(www\\.)?poshmark\\.com/.*' 
+                            : undefined
+                        }
+                        title={
+                          platform === 'poshmark'
+                            ? 'Please enter a valid Poshmark URL (https://poshmark.com/...)'
+                            : undefined
+                        }
                       />
                     </div>
                   </div>
