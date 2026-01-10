@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Query } from 'appwrite';
 import { databases, APPWRITE_DATABASE_ID, APPWRITE_LISTINGS_COLLECTION_ID } from '@/lib/appwrite';
 import { Listing, ListingFormData, Platform, ListingStatus } from '@/types/listing';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminSettings } from './useAdminSettings';
 
 export const useListings = () => {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -148,52 +149,73 @@ export const useListings = () => {
   };
 };
 
-// Analytics helpers
+// Analytics helpers with platform fees
 export const useListingStats = (listings: Listing[]) => {
-  const totalListings = listings.length;
+  const { calculatePlatformFee, calculateNetRevenue, loading: settingsLoading } = useAdminSettings();
   
-  const activeListings = listings.filter(l =>
-    l.platforms.some(p => p.status === 'available' || p.status === 'reserved')
-  ).length;
+  return useMemo(() => {
+    const totalListings = listings.length;
+    
+    const activeListings = listings.filter(l =>
+      l.platforms.some(p => p.status === 'available' || p.status === 'reserved')
+    ).length;
 
-  const soldItems = listings.reduce((acc, l) => {
-    return acc + l.platforms.filter(p => p.status === 'sold').length;
-  }, 0);
+    const soldItems = listings.reduce((acc, l) => {
+      return acc + l.platforms.filter(p => p.status === 'sold').length;
+    }, 0);
 
-  const totalRevenue = listings.reduce((acc, l) => {
-    return acc + l.platforms
-      .filter(p => p.status === 'sold')
-      .reduce((sum, p) => sum + p.price, 0);
-  }, 0);
+    // Gross revenue (before fees)
+    const totalGrossRevenue = listings.reduce((acc, l) => {
+      return acc + l.platforms
+        .filter(p => p.status === 'sold')
+        .reduce((sum, p) => sum + p.price, 0);
+    }, 0);
 
-  const totalCost = listings.reduce((acc, l) => {
-    const soldCount = l.platforms.filter(p => p.status === 'sold').length;
-    return acc + (soldCount > 0 ? l.costPrice : 0);
-  }, 0);
+    // Total platform fees
+    const totalFees = listings.reduce((acc, l) => {
+      return acc + l.platforms
+        .filter(p => p.status === 'sold')
+        .reduce((sum, p) => sum + calculatePlatformFee(p.platform, p.price), 0);
+    }, 0);
 
-  const totalProfit = totalRevenue - totalCost;
+    // Net revenue (after platform fees)
+    const totalRevenue = totalGrossRevenue - totalFees;
 
-  const platformBreakdown = listings.reduce((acc, l) => {
-    l.platforms.forEach(p => {
-      if (!acc[p.platform]) {
-        acc[p.platform] = { total: 0, sold: 0, revenue: 0 };
-      }
-      acc[p.platform].total++;
-      if (p.status === 'sold') {
-        acc[p.platform].sold++;
-        acc[p.platform].revenue += p.price;
-      }
-    });
-    return acc;
-  }, {} as Record<Platform, { total: number; sold: number; revenue: number }>);
+    const totalCost = listings.reduce((acc, l) => {
+      const soldCount = l.platforms.filter(p => p.status === 'sold').length;
+      return acc + (soldCount > 0 ? l.costPrice : 0);
+    }, 0);
 
-  return {
-    totalListings,
-    activeListings,
-    soldItems,
-    totalRevenue,
-    totalCost,
-    totalProfit,
-    platformBreakdown,
-  };
+    // Profit now accounts for platform fees
+    const totalProfit = totalRevenue - totalCost;
+
+    const platformBreakdown = listings.reduce((acc, l) => {
+      l.platforms.forEach(p => {
+        if (!acc[p.platform]) {
+          acc[p.platform] = { total: 0, sold: 0, grossRevenue: 0, fees: 0, revenue: 0 };
+        }
+        acc[p.platform].total++;
+        if (p.status === 'sold') {
+          acc[p.platform].sold++;
+          const fee = calculatePlatformFee(p.platform, p.price);
+          acc[p.platform].grossRevenue += p.price;
+          acc[p.platform].fees += fee;
+          acc[p.platform].revenue += p.price - fee;
+        }
+      });
+      return acc;
+    }, {} as Record<Platform, { total: number; sold: number; grossRevenue: number; fees: number; revenue: number }>);
+
+    return {
+      totalListings,
+      activeListings,
+      soldItems,
+      totalGrossRevenue,
+      totalFees,
+      totalRevenue,
+      totalCost,
+      totalProfit,
+      platformBreakdown,
+    };
+  }, [listings, calculatePlatformFee, settingsLoading]);
 };
