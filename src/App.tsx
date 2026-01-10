@@ -12,6 +12,7 @@ import Listings from "@/pages/Listings";
 import ListingDetail from "@/pages/ListingDetail";
 import ListingForm from "@/pages/ListingForm";
 import Analytics from "@/pages/Analytics";
+import Settings from "@/pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -81,6 +82,16 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardLayout>
                     <Analytics />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Settings />
                   </DashboardLayout>
                 </ProtectedRoute>
               }
