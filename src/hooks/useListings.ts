@@ -1,104 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Query } from 'appwrite';
+import { databases, APPWRITE_DATABASE_ID, APPWRITE_LISTINGS_COLLECTION_ID } from '@/lib/appwrite';
 import { Listing, ListingFormData, Platform, ListingStatus } from '@/types/listing';
-
-// Mock data for demonstration - replace with Appwrite calls
-const mockListings: Listing[] = [
-  {
-    $id: '1',
-    $createdAt: '2024-01-15T10:00:00Z',
-    $updatedAt: '2024-01-15T10:00:00Z',
-    title: 'Vintage Leather Jacket',
-    description: 'Classic brown leather jacket in excellent condition',
-    imageUrl: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=300',
-    category: 'Clothing',
-    costPrice: 45,
-    sku: 'VLJ-001',
-    quantity: 1,
-    platforms: [
-      { platform: 'facebook', price: 120, status: 'available', listedAt: '2024-01-15' },
-      { platform: 'poshmark', price: 135, status: 'available', listedAt: '2024-01-15' },
-    ],
-    userId: 'user1',
-  },
-  {
-    $id: '2',
-    $createdAt: '2024-01-10T10:00:00Z',
-    $updatedAt: '2024-01-18T10:00:00Z',
-    title: 'Nintendo Switch Console',
-    description: 'Barely used Nintendo Switch with original packaging',
-    imageUrl: 'https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=300',
-    category: 'Electronics',
-    costPrice: 180,
-    sku: 'NSW-002',
-    quantity: 1,
-    platforms: [
-      { platform: 'facebook', price: 250, status: 'sold', listedAt: '2024-01-10', soldAt: '2024-01-18' },
-    ],
-    userId: 'user1',
-  },
-  {
-    $id: '3',
-    $createdAt: '2024-01-12T10:00:00Z',
-    $updatedAt: '2024-01-12T10:00:00Z',
-    title: 'Handmade Ceramic Vase Set',
-    description: 'Set of 3 artisan ceramic vases',
-    imageUrl: 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=300',
-    category: 'Home & Garden',
-    costPrice: 30,
-    quantity: 3,
-    platforms: [
-      { platform: 'squarespace', price: 89, status: 'available', listedAt: '2024-01-12' },
-      { platform: 'facebook', price: 75, status: 'reserved', listedAt: '2024-01-12' },
-    ],
-    userId: 'user1',
-  },
-  {
-    $id: '4',
-    $createdAt: '2024-01-08T10:00:00Z',
-    $updatedAt: '2024-01-20T10:00:00Z',
-    title: 'Designer Sunglasses',
-    description: 'Ray-Ban Aviator sunglasses with case',
-    imageUrl: 'https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=300',
-    category: 'Clothing',
-    costPrice: 60,
-    sku: 'DSG-004',
-    quantity: 1,
-    platforms: [
-      { platform: 'poshmark', price: 95, status: 'sold', listedAt: '2024-01-08', soldAt: '2024-01-20' },
-    ],
-    userId: 'user1',
-  },
-  {
-    $id: '5',
-    $createdAt: '2024-01-20T10:00:00Z',
-    $updatedAt: '2024-01-20T10:00:00Z',
-    title: 'Vintage Record Player',
-    description: 'Working vintage turntable from the 70s',
-    imageUrl: 'https://images.unsplash.com/photo-1539375665275-f9de415ef9ac?w=300',
-    category: 'Electronics',
-    costPrice: 75,
-    quantity: 1,
-    platforms: [
-      { platform: 'facebook', price: 200, status: 'available', listedAt: '2024-01-20' },
-      { platform: 'squarespace', price: 225, status: 'available', listedAt: '2024-01-20' },
-    ],
-    userId: 'user1',
-  },
-];
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useListings = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const fetchListings = useCallback(async () => {
+    if (!APPWRITE_DATABASE_ID || !APPWRITE_LISTINGS_COLLECTION_ID) {
+      setError('Appwrite database configuration missing. Please check your environment variables.');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
-      // TODO: Replace with actual Appwrite call
-      // const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-      setListings(mockListings);
+      const response = await databases.listDocuments(
+        APPWRITE_DATABASE_ID,
+        APPWRITE_LISTINGS_COLLECTION_ID,
+        [Query.orderDesc('$createdAt')]
+      );
+      
+      // Parse platforms JSON string back to array if stored as string
+      const parsedListings = response.documents.map((doc: any) => ({
+        ...doc,
+        platforms: typeof doc.platforms === 'string' ? JSON.parse(doc.platforms) : doc.platforms,
+      })) as Listing[];
+      
+      setListings(parsedListings);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch listings');
     } finally {
@@ -111,30 +45,70 @@ export const useListings = () => {
   }, [fetchListings]);
 
   const createListing = async (data: ListingFormData): Promise<Listing> => {
-    // TODO: Replace with actual Appwrite call
-    const newListing: Listing = {
-      $id: Date.now().toString(),
-      $createdAt: new Date().toISOString(),
-      $updatedAt: new Date().toISOString(),
+    if (!APPWRITE_DATABASE_ID || !APPWRITE_LISTINGS_COLLECTION_ID) {
+      throw new Error('Appwrite database configuration missing');
+    }
+
+    // Appwrite requires platforms to be stored as JSON string if it's a complex array
+    const documentData = {
       ...data,
-      userId: 'user1',
+      platforms: JSON.stringify(data.platforms),
+      userId: user?.$id || '',
     };
+
+    const response = await databases.createDocument(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_LISTINGS_COLLECTION_ID,
+      'unique()',
+      documentData
+    );
+
+    const newListing = {
+      ...response,
+      platforms: data.platforms,
+    } as unknown as Listing;
+
     setListings(prev => [newListing, ...prev]);
     return newListing;
   };
 
   const updateListing = async (id: string, data: Partial<ListingFormData>): Promise<Listing> => {
-    // TODO: Replace with actual Appwrite call
-    const updated = listings.find(l => l.$id === id);
-    if (!updated) throw new Error('Listing not found');
-    
-    const updatedListing = { ...updated, ...data, $updatedAt: new Date().toISOString() };
+    if (!APPWRITE_DATABASE_ID || !APPWRITE_LISTINGS_COLLECTION_ID) {
+      throw new Error('Appwrite database configuration missing');
+    }
+
+    const updateData: any = { ...data };
+    if (data.platforms) {
+      updateData.platforms = JSON.stringify(data.platforms);
+    }
+
+    const response = await databases.updateDocument(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_LISTINGS_COLLECTION_ID,
+      id,
+      updateData
+    );
+
+    const updatedListing = {
+      ...response,
+      platforms: data.platforms || (typeof response.platforms === 'string' ? JSON.parse(response.platforms) : response.platforms),
+    } as unknown as Listing;
+
     setListings(prev => prev.map(l => l.$id === id ? updatedListing : l));
     return updatedListing;
   };
 
   const deleteListing = async (id: string): Promise<void> => {
-    // TODO: Replace with actual Appwrite call
+    if (!APPWRITE_DATABASE_ID || !APPWRITE_LISTINGS_COLLECTION_ID) {
+      throw new Error('Appwrite database configuration missing');
+    }
+
+    await databases.deleteDocument(
+      APPWRITE_DATABASE_ID,
+      APPWRITE_LISTINGS_COLLECTION_ID,
+      id
+    );
+    
     setListings(prev => prev.filter(l => l.$id !== id));
   };
 
