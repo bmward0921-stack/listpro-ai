@@ -371,14 +371,25 @@ const ListingForm = () => {
 
         {/* Platform Settings */}
         <Card>
-          <CardHeader className="p-3 sm:p-6">
-            <CardTitle className="text-base sm:text-lg">Platform Settings</CardTitle>
+          <CardHeader className="p-4 sm:p-6">
+            <CardTitle className="text-lg sm:text-xl">Platform Settings</CardTitle>
+            <p className="text-sm text-muted-foreground">Enable platforms and set prices for your listing</p>
           </CardHeader>
-          <CardContent className="space-y-4 p-3 pt-0 sm:space-y-6 sm:p-6 sm:pt-0">
+          <CardContent className="space-y-5 p-4 pt-0 sm:space-y-6 sm:p-6 sm:pt-0">
             {PLATFORMS.map((platform) => (
-              <div key={platform} className="space-y-3 rounded-lg border border-border p-3 sm:space-y-4 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor={`${platform}-enabled`} className="text-base font-medium">
+              <div 
+                key={platform} 
+                className={`space-y-4 rounded-xl border-2 p-4 transition-all sm:p-5 ${
+                  platformSettings[platform].enabled 
+                    ? 'border-primary/50 bg-primary/5' 
+                    : 'border-border bg-muted/20'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <Label 
+                    htmlFor={`${platform}-enabled`} 
+                    className="text-lg font-semibold sm:text-xl"
+                  >
                     {PLATFORM_LABELS[platform]}
                   </Label>
                   <Switch
@@ -390,13 +401,16 @@ const ListingForm = () => {
                         [platform]: { ...platformSettings[platform], enabled: checked },
                       })
                     }
+                    className="scale-125"
                   />
                 </div>
 
                 {platformSettings[platform].enabled && (
-                  <div className="space-y-3">
+                  <div className="space-y-4 pt-2">
                     <div className="space-y-2">
-                      <Label htmlFor={`${platform}-price`}>Selling Price ($)</Label>
+                      <Label htmlFor={`${platform}-price`} className="text-base font-medium">
+                        Selling Price ($)
+                      </Label>
                       <Input
                         id={`${platform}-price`}
                         type="number"
@@ -413,15 +427,16 @@ const ListingForm = () => {
                           })
                         }
                         required
+                        className="h-12 text-lg"
                       />
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                        <Label htmlFor={`${platform}-url`}>
+                        <LinkIcon className="h-5 w-5 text-muted-foreground" />
+                        <Label htmlFor={`${platform}-url`} className="text-base font-medium">
                           Listing URL
                           {platformSettings[platform].url && (
-                            <span className="ml-2 text-xs text-success">✓ Linked</span>
+                            <span className="ml-2 text-sm text-success">✓ Linked</span>
                           )}
                         </Label>
                       </div>
@@ -446,23 +461,30 @@ const ListingForm = () => {
                               ? 'https://facebook.com/marketplace/...'
                               : platform === 'squarespace'
                               ? 'https://yourstore.squarespace.com/...'
+                              : platform === 'ebay'
+                              ? 'https://ebay.com/itm/...'
+                              : platform === 'shopify'
+                              ? 'https://yourstore.myshopify.com/...'
+                              : platform === 'amazon'
+                              ? 'https://amazon.com/dp/...'
                               : 'https://...'
                           }
-                          className="flex-1"
+                          className="h-12 flex-1 text-base"
                         />
                         {platformSettings[platform].url && (
                           <Button
                             type="button"
                             variant="outline"
                             size="icon"
+                            className="h-12 w-12"
                             onClick={() => window.open(platformSettings[platform].url, '_blank')}
                             title="Open listing"
                           >
-                            <ExternalLink className="h-4 w-4" />
+                            <ExternalLink className="h-5 w-5" />
                           </Button>
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         Paste the URL after listing on {PLATFORM_LABELS[platform]}
                       </p>
                     </div>
