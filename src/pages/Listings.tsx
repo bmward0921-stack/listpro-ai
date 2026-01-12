@@ -193,7 +193,7 @@ const Listings = () => {
             </TableHeader>
             <TableBody>
               {filteredListings.map((listing) => (
-                <TableRow key={listing.$id}>
+                <TableRow key={listing.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       {getPrimaryImage(listing) ? (
@@ -229,7 +229,7 @@ const Listings = () => {
                     </div>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(listing.$createdAt), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(listing.created_at), { addSuffix: true })}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -240,13 +240,13 @@ const Listings = () => {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
-                          <Link to={`/listings/${listing.$id}`}>
+                          <Link to={`/listings/${listing.id}`}>
                             <Eye className="mr-2 h-4 w-4" />
                             View
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to={`/listings/${listing.$id}/edit`}>
+                          <Link to={`/listings/${listing.id}/edit`}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit
                           </Link>
@@ -257,7 +257,7 @@ const Listings = () => {
                           .map((p) => (
                             <DropdownMenuItem
                               key={p.platform}
-                              onClick={() => handleMarkSold(listing.$id, p.platform)}
+                              onClick={() => handleMarkSold(listing.id, p.platform)}
                             >
                               <CheckCircle className="mr-2 h-4 w-4" />
                               Mark sold on {PLATFORM_LABELS[p.platform]}
@@ -266,7 +266,7 @@ const Listings = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-destructive focus:text-destructive"
-                          onClick={() => setDeleteId(listing.$id)}
+                          onClick={() => setDeleteId(listing.id)}
                         >
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete

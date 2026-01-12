@@ -57,27 +57,27 @@ const ActivityFeed = ({
         const colorClass = ACTION_COLORS[activity.action];
 
         return (
-          <div key={activity.$id} className="flex gap-3">
+          <div key={activity.id} className="flex gap-3">
             <div className={cn('flex h-8 w-8 shrink-0 items-center justify-center rounded-full', colorClass)}>
               <Icon className="h-4 w-4" />
             </div>
             <div className="flex-1 space-y-1">
               <div className="flex flex-wrap items-center gap-1 text-sm">
                 <span className="font-medium">
-                  {activity.userEmail?.split('@')[0] || 'Unknown user'}
+                  {activity.user_email?.split('@')[0] || 'Unknown user'}
                 </span>
                 <span className="text-muted-foreground">
                   {ACTION_LABELS[activity.action].toLowerCase()}
                 </span>
                 {showListingLink && activity.action !== 'deleted' ? (
                   <Link 
-                    to={`/listings/${activity.listingId}`}
+                    to={`/listings/${activity.listing_id}`}
                     className="font-medium text-primary hover:underline"
                   >
-                    {activity.listingTitle}
+                    {activity.listing_title}
                   </Link>
                 ) : (
-                  <span className="font-medium">{activity.listingTitle}</span>
+                  <span className="font-medium">{activity.listing_title}</span>
                 )}
               </div>
               
@@ -85,19 +85,19 @@ const ActivityFeed = ({
                 <p className="text-sm text-muted-foreground">{activity.details}</p>
               )}
               
-              {activity.oldValue && activity.newValue && (
+              {activity.old_value && activity.new_value && (
                 <p className="text-sm text-muted-foreground">
-                  <span className="line-through">{activity.oldValue}</span>
+                  <span className="line-through">{activity.old_value}</span>
                   {' → '}
-                  <span className="font-medium">{activity.newValue}</span>
+                  <span className="font-medium">{activity.new_value}</span>
                 </p>
               )}
               
               <p className="flex items-center gap-1 text-xs text-muted-foreground">
                 <User className="h-3 w-3" />
-                {activity.userEmail}
+                {activity.user_email}
                 <span className="mx-1">•</span>
-                {formatDistanceToNow(new Date(activity.$createdAt), { addSuffix: true })}
+                {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true })}
               </p>
             </div>
           </div>

@@ -46,7 +46,7 @@ const ListingDetail = () => {
   const { activities, loading: activitiesLoading, logActivity } = useActivityLog(id);
   const { calculatePlatformFee, calculateNetRevenue, getPlatformFee } = useAdminSettings();
   
-  const listing = listings.find((l) => l.$id === id);
+  const listing = listings.find((l) => l.id === id);
 
   const handleDelete = async () => {
     if (!id || !listing) return;
@@ -165,9 +165,9 @@ const ListingDetail = () => {
           {/* Product Images */}
           <Card>
             <CardContent className="p-4">
-              {(listing.images?.length > 0 || listing.imageUrl) ? (
+              {listing.images?.length > 0 ? (
                 <ImageGallery 
-                  images={listing.images?.length > 0 ? listing.images : [listing.imageUrl!]} 
+                  images={listing.images}
                   alt={listing.title}
                 />
               ) : (
@@ -333,7 +333,7 @@ const ListingDetail = () => {
                   <div>
                     <p className="font-medium">Created</p>
                     <p className="text-muted-foreground">
-                      {format(new Date(listing.$createdAt), 'MMM d, yyyy h:mm a')}
+                      {format(new Date(listing.created_at), 'MMM d, yyyy h:mm a')}
                     </p>
                   </div>
                 </div>
@@ -342,7 +342,7 @@ const ListingDetail = () => {
                   <div>
                     <p className="font-medium">Last Updated</p>
                     <p className="text-muted-foreground">
-                      {formatDistanceToNow(new Date(listing.$updatedAt), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(listing.updated_at), { addSuffix: true })}
                     </p>
                   </div>
                 </div>

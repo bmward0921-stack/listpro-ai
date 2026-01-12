@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Package, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { getMissingConfig } from '@/lib/appwrite';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,11 +15,10 @@ const Login = () => {
   const [localError, setLocalError] = useState('');
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const { login, signup, error: authError, isConfigured, clearError } = useAuth();
+  const { login, signup, error: authError, clearError } = useAuth();
   const navigate = useNavigate();
 
   const error = localError || authError;
-  const missingConfig = getMissingConfig();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,8 +44,8 @@ const Login = () => {
     setSuccessMessage('');
     clearError();
 
-    if (password.length < 8) {
-      setLocalError('Password must be at least 8 characters long');
+    if (password.length < 6) {
+      setLocalError('Password must be at least 6 characters long');
       return;
     }
 
@@ -63,37 +61,6 @@ const Login = () => {
     
     setLoading(false);
   };
-
-  // Show configuration warning if Appwrite is not set up
-  if (!isConfigured) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
-        <Card className="w-full max-w-md border-border/50 shadow-2xl">
-          <CardHeader className="space-y-4 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10">
-              <AlertCircle className="h-8 w-8 text-destructive" />
-            </div>
-            <div>
-              <CardTitle className="text-2xl font-bold">Configuration Required</CardTitle>
-              <CardDescription className="mt-2">
-                Appwrite is not configured. Please set the following environment variables:
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 rounded-lg bg-muted p-4 font-mono text-sm">
-              {missingConfig.map((config) => (
-                <div key={config} className="text-destructive">• {config}</div>
-              ))}
-            </div>
-            <p className="mt-4 text-center text-xs text-muted-foreground">
-              Create a <code className="rounded bg-muted px-1">.env</code> file in your project root with these variables.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
@@ -207,10 +174,10 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    minLength={8}
+                    minLength={6}
                     autoComplete="new-password"
                   />
-                  <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
+                  <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>

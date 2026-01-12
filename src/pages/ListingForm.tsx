@@ -30,14 +30,12 @@ const ListingForm = () => {
   const { listings, createListing, updateListing } = useListings();
   const { logActivity } = useActivityLog();
   const isEditing = !!id;
-  const existingListing = listings.find((l) => l.$id === id);
+  const existingListing = listings.find((l) => l.id === id);
 
-  // Support legacy imageUrl by converting to images array
+  // Get existing images
   const existingImages = existingListing?.images?.length 
     ? existingListing.images 
-    : existingListing?.imageUrl 
-      ? [existingListing.imageUrl] 
-      : [];
+    : [];
 
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -98,7 +96,7 @@ const ListingForm = () => {
         toast({ title: 'Success', description: 'Listing updated successfully.' });
       } else {
         const newListing = await createListing(listingData);
-        await logActivity('created', newListing.$id, formData.title, `Listed on ${platforms.map(p => PLATFORM_LABELS[p.platform]).join(', ')}`);
+        await logActivity('created', newListing.id, formData.title, `Listed on ${platforms.map(p => PLATFORM_LABELS[p.platform]).join(', ')}`);
         toast({ title: 'Success', description: 'Listing created successfully.' });
       }
 

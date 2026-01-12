@@ -267,15 +267,15 @@ const Analytics = () => {
             {topSelling.length > 0 ? (
               topSelling.map((item, index) => (
                 <div
-                  key={item.$id}
+                  key={item.id}
                   className="flex items-center gap-4 rounded-lg border border-border p-3"
                 >
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                     {index + 1}
                   </div>
-                  {item.imageUrl ? (
+                  {item.images && item.images.length > 0 ? (
                     <img
-                      src={item.imageUrl}
+                      src={item.images[0]}
                       alt={item.title}
                       className="h-10 w-10 rounded-lg object-cover"
                     />

@@ -245,14 +245,14 @@ const AdminSettings = () => {
   const exportAsCSV = () => {
     const headers = ['ID', 'Title', 'Category', 'Cost Price', 'Quantity', 'SKU', 'Platforms', 'Created At'];
     const rows = listings.map(l => [
-      l.$id,
+      l.id,
       `"${l.title.replace(/"/g, '""')}"`,
       l.category,
       l.costPrice,
       l.quantity,
       l.sku || '',
       l.platforms.map(p => p.platform).join(';'),
-      l.$createdAt,
+      l.created_at,
     ]);
     const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
