@@ -138,8 +138,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </nav>
         </aside>
 
-        {/* Main content - add bottom padding for mobile nav */}
-        <main className="flex-1 overflow-auto p-6 pb-24 lg:pb-6">{children}</main>
+        {/* Main content - add bottom padding for mobile nav, extra for landscape */}
+        <main className="flex-1 overflow-auto p-4 pb-24 landscape:pb-28 sm:p-6 lg:pb-6">{children}</main>
       </div>
 
       {/* Mobile Bottom Navigation */}

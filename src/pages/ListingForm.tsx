@@ -473,24 +473,26 @@ const ListingForm = () => {
           </CardContent>
         </Card>
 
-        {/* Actions */}
-        <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" size="sm" className="sm:size-default" asChild>
-            <Link to="/listings">Cancel</Link>
-          </Button>
-          <Button type="submit" size="sm" className="sm:size-default" disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin sm:mr-2 sm:h-4 sm:w-4" />
-                <span className="text-sm">Saving...</span>
-              </>
-            ) : (
-              <>
-                <Save className="mr-1.5 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
-                <span className="text-sm">{isEditing ? 'Update' : 'Create'}</span>
-              </>
-            )}
-          </Button>
+        {/* Actions - sticky on mobile for easy access */}
+        <div className="sticky bottom-20 z-40 -mx-2 bg-background/95 px-2 py-3 backdrop-blur-sm landscape:bottom-24 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none lg:bottom-0">
+          <div className="flex justify-end gap-3">
+            <Button type="button" variant="outline" size="sm" className="sm:size-default" asChild>
+              <Link to="/listings">Cancel</Link>
+            </Button>
+            <Button type="submit" size="sm" className="sm:size-default" disabled={loading}>
+              {loading ? (
+                <>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin sm:mr-2 sm:h-4 sm:w-4" />
+                  <span className="text-sm">Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="mr-1.5 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+                  <span className="text-sm">{isEditing ? 'Update' : 'Create'}</span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </div>
