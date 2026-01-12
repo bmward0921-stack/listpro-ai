@@ -4,11 +4,9 @@ import StatCard from '@/components/ui/stat-card';
 import PlatformBadge from '@/components/PlatformBadge';
 import ActivityFeed from '@/components/ActivityFeed';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, TrendingUp, DollarSign, ShoppingBag, Receipt, Plus } from 'lucide-react';
+import { Package, TrendingUp, DollarSign, ShoppingBag, Receipt } from 'lucide-react';
 import { PLATFORM_LABELS, Platform } from '@/types/listing';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 
 const PLATFORM_COLORS: Record<Platform, string> = {
   facebook: '#3b82f6',
@@ -162,17 +160,6 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
-
-      {/* Floating Action Button for Quick Add */}
-      <Link to="/listings/new" className="fixed bottom-6 right-6 z-50 lg:hidden">
-        <Button
-          size="lg"
-          className="h-14 w-14 rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-shadow"
-        >
-          <Plus className="h-6 w-6" />
-          <span className="sr-only">Add new listing</span>
-        </Button>
-      </Link>
     </div>
   );
 };

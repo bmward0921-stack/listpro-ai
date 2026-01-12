@@ -15,6 +15,7 @@ import {
   LogOut,
   Menu,
   X,
+  Plus,
 } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -139,6 +140,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
         {/* Main content */}
         <main className="flex-1 overflow-auto p-6">{children}</main>
+
+        {/* Floating Action Button for Quick Add - Mobile only */}
+        {location.pathname !== '/listings/new' && (
+          <Link to="/listings/new" className="fixed bottom-6 right-6 z-50 lg:hidden">
+            <Button
+              size="lg"
+              className="h-14 w-14 rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-shadow"
+            >
+              <Plus className="h-6 w-6" />
+              <span className="sr-only">Add new listing</span>
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   );
