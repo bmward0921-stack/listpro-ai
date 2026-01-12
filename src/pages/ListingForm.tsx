@@ -24,6 +24,7 @@ import { getPrimaryImage } from '@/types/listing';
 import AIDescriptionGenerator from '@/components/AIDescriptionGenerator';
 import ProductImageAnalyzer from '@/components/ProductImageAnalyzer';
 import ProductLibraryPicker from '@/components/ProductLibraryPicker';
+import PlatformCopyButtons from '@/components/PlatformCopyButtons';
 import { ProductTemplate } from '@/hooks/useProductLibrary';
 
 const PLATFORMS: Platform[] = ['facebook', 'poshmark', 'squarespace'];
@@ -170,22 +171,16 @@ const ListingForm = () => {
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle>Product Details</CardTitle>
             <div className="flex flex-wrap gap-2">
-              {(formData.title || formData.description) && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={copyAllToClipboard}
-                >
-                  {copiedField === 'All' ? (
-                    <Check className="h-4 w-4 text-success" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                  <span className="hidden sm:inline">Copy All</span>
-                </Button>
-              )}
+              <PlatformCopyButtons
+                title={formData.title}
+                description={formData.description}
+                price={
+                  PLATFORMS.find(p => platformSettings[p].enabled)
+                    ? platformSettings[PLATFORMS.find(p => platformSettings[p].enabled)!].price
+                    : formData.costPrice
+                }
+                category={formData.category}
+              />
               <ProductLibraryPicker
                 onSelect={(template: ProductTemplate) => {
                   setFormData(prev => ({
