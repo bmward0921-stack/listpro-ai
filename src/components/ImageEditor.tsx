@@ -134,6 +134,47 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) => {
     });
   }, [canRedo, history, historyIndex, restoreFromHistory]);
 
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if Ctrl (Windows/Linux) or Cmd (Mac) is pressed
+      const isModifierPressed = e.ctrlKey || e.metaKey;
+      
+      if (!isModifierPressed) return;
+
+      // Undo: Ctrl+Z or Cmd+Z
+      if (e.key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        if (canUndo) {
+          const newIndex = historyIndex - 1;
+          setHistoryIndex(newIndex);
+          restoreFromHistory(history[newIndex]);
+          toast({
+            title: 'Undo',
+            description: 'Reverted to previous state (Ctrl+Z)',
+          });
+        }
+      }
+      
+      // Redo: Ctrl+Y or Cmd+Y or Ctrl+Shift+Z or Cmd+Shift+Z
+      if ((e.key === 'y') || (e.key === 'z' && e.shiftKey)) {
+        e.preventDefault();
+        if (canRedo) {
+          const newIndex = historyIndex + 1;
+          setHistoryIndex(newIndex);
+          restoreFromHistory(history[newIndex]);
+          toast({
+            title: 'Redo',
+            description: 'Restored next state (Ctrl+Y)',
+          });
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [canUndo, canRedo, history, historyIndex, restoreFromHistory]);
+
   // Initialize canvas
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
@@ -417,7 +458,7 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) => {
           size="sm"
           onClick={handleUndo}
           disabled={!canUndo}
-          title="Undo"
+          title="Undo (Ctrl+Z)"
         >
           <Undo2 className="h-4 w-4" />
         </Button>
@@ -427,7 +468,7 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) => {
           size="sm"
           onClick={handleRedo}
           disabled={!canRedo}
-          title="Redo"
+          title="Redo (Ctrl+Y)"
         >
           <Redo2 className="h-4 w-4" />
         </Button>
