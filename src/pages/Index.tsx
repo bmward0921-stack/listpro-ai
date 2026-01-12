@@ -1,8 +1,7 @@
 import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ExternalLink, Plus, Package, ArrowRight, Search, X } from "lucide-react";
-import ProductImageAnalyzer, { ProductDetails } from "@/components/ProductImageAnalyzer";
-import BatchImageAnalyzer from "@/components/BatchImageAnalyzer";
+import BatchImageAnalyzer, { ProductDetails } from "@/components/BatchImageAnalyzer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -146,22 +145,11 @@ const Index = () => {
       {/* Smart Scan Header */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <h1 className="text-xl font-bold">StockSync</h1>
-        <div className="flex gap-2">
-          <ProductImageAnalyzer 
-            onProductDetected={(details: ProductDetails) => {
-              console.log("Product detected:", details);
-              // Navigate to create listing with detected data
-              window.location.href = `/listings/new?prefill=${encodeURIComponent(JSON.stringify(details))}`;
-            }} 
-          />
-          <BatchImageAnalyzer 
-            onProductsDetected={(products: ProductDetails[]) => {
-              console.log("Products detected:", products);
-              // For batch, just show success - products are saved to library
-              // User can access them from the product library
-            }} 
-          />
-        </div>
+        <BatchImageAnalyzer 
+          onProductsDetected={(products: ProductDetails[]) => {
+            console.log("Products detected:", products);
+          }} 
+        />
       </div>
 
       {/* Uploaded Images Preview */}
