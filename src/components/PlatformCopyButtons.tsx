@@ -18,8 +18,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Platform, PLATFORM_LABELS } from '@/types/listing';
-import { Copy, Check, ChevronDown, Eye } from 'lucide-react';
+import { Copy, Check, ChevronDown, Eye, Settings } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { usePlatformTemplates, PlatformTemplates } from '@/hooks/usePlatformTemplates';
+import { Link } from 'react-router-dom';
 
 interface PlatformCopyButtonsProps {
   title: string;
@@ -28,119 +30,7 @@ interface PlatformCopyButtonsProps {
   category?: string;
 }
 
-// Generate hashtags from title and category
-const generateHashtags = (title: string, category?: string): string => {
-  const words = title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, '')
-    .split(/\s+/)
-    .filter(w => w.length > 2);
-  
-  const hashtags = words.slice(0, 5).map(w => `#${w}`);
-  
-  // Add category hashtag
-  if (category) {
-    hashtags.push(`#${category.toLowerCase().replace(/[^a-z0-9]/g, '')}`);
-  }
-  
-  // Add common reseller hashtags
-  hashtags.push('#forsale', '#shopsmall', '#reseller');
-  
-  return [...new Set(hashtags)].slice(0, 10).join(' ');
-};
-
-// Generate Facebook-friendly keywords
-const generateKeywords = (title: string, category?: string): string => {
-  const keywords: string[] = [];
-  
-  if (category) {
-    keywords.push(category);
-  }
-  
-  // Common search terms
-  keywords.push('for sale', 'great condition', 'local pickup', 'shipping available');
-  
-  return keywords.join(' • ');
-};
-
-// Format for Poshmark (hashtags, concise, stylized)
-const formatForPoshmark = (
-  title: string,
-  description: string,
-  price: number,
-  category?: string
-): string => {
-  const hashtags = generateHashtags(title, category);
-  
-  return `${title}
-
-${description}
-
-💰 Price: $${price.toFixed(2)}
-
-${hashtags}
-
-✨ Bundle to save on shipping!
-💕 Offers welcome!`;
-};
-
-// Format for Facebook Marketplace (keywords, emojis, local focus)
-const formatForFacebook = (
-  title: string,
-  description: string,
-  price: number,
-  category?: string
-): string => {
-  const keywords = generateKeywords(title, category);
-  
-  return `🔥 ${title} - $${price.toFixed(2)}
-
-${description}
-
-📦 ${keywords}
-
-✅ Great condition
-🚗 Local pickup available
-📬 Shipping available
-
-💬 Message for questions!`;
-};
-
-// Format for Squarespace (clean, professional)
-const formatForSquarespace = (
-  title: string,
-  description: string,
-  price: number,
-  category?: string
-): string => {
-  return `${description}
-
-${category ? `Category: ${category}` : ''}
-
-Price: $${price.toFixed(2)}`;
-};
-
-// Format all details together (generic)
-const formatGeneric = (
-  title: string,
-  description: string,
-  price: number
-): string => {
-  return `${title}
-
-Price: $${price.toFixed(2)}
-
-${description}`;
-};
-
-const platformFormatters: Record<Platform | 'generic', (title: string, description: string, price: number, category?: string) => string> = {
-  poshmark: formatForPoshmark,
-  facebook: formatForFacebook,
-  squarespace: formatForSquarespace,
-  generic: formatGeneric,
-};
-
-const platformDescriptions: Record<Platform | 'generic', string> = {
+const platformDescriptions: Record<keyof PlatformTemplates, string> = {
   poshmark: 'With hashtags & bundle text',
   facebook: 'With emojis & keywords',
   squarespace: 'Clean & professional',
@@ -151,10 +41,10 @@ const PlatformCopyButtons = ({ title, description, price, category }: PlatformCo
   const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewTab, setPreviewTab] = useState<string>('poshmark');
+  const { formatListing } = usePlatformTemplates();
 
-  const copyForPlatform = async (platform: Platform | 'generic') => {
-    const formatter = platformFormatters[platform];
-    const formattedText = formatter(title, description, price, category);
+  const copyForPlatform = async (platform: keyof PlatformTemplates) => {
+    const formattedText = formatListing(platform, title, description, price, category);
     
     try {
       await navigator.clipboard.writeText(formattedText);
@@ -175,7 +65,7 @@ const PlatformCopyButtons = ({ title, description, price, category }: PlatformCo
 
   if (!hasContent) return null;
 
-  const platforms: (Platform | 'generic')[] = ['poshmark', 'facebook', 'squarespace', 'generic'];
+  const platforms: (keyof PlatformTemplates)[] = ['poshmark', 'facebook', 'squarespace', 'generic'];
 
   return (
     <div className="flex gap-2">
@@ -189,7 +79,15 @@ const PlatformCopyButtons = ({ title, description, price, category }: PlatformCo
         </DialogTrigger>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Listing Preview</DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Listing Preview</span>
+              <Button variant="ghost" size="sm" asChild className="gap-1.5 text-muted-foreground">
+                <Link to="/settings">
+                  <Settings className="h-4 w-4" />
+                  Edit Templates
+                </Link>
+              </Button>
+            </DialogTitle>
           </DialogHeader>
           <Tabs value={previewTab} onValueChange={setPreviewTab}>
             <TabsList className="grid w-full grid-cols-4">
@@ -220,7 +118,7 @@ const PlatformCopyButtons = ({ title, description, price, category }: PlatformCo
                   </div>
                   <ScrollArea className="h-64 rounded-lg border bg-muted/30 p-4">
                     <pre className="whitespace-pre-wrap font-sans text-sm">
-                      {platformFormatters[platform](title, description, price, category)}
+                      {formatListing(platform, title, description, price, category)}
                     </pre>
                   </ScrollArea>
                 </div>
