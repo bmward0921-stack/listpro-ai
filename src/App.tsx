@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import Listings from "@/pages/Listings";
 import ListingDetail from "@/pages/ListingDetail";
 import ListingForm from "@/pages/ListingForm";
+import BulkListing from "@/pages/BulkListing";
 import Analytics from "@/pages/Analytics";
 import Settings from "@/pages/Settings";
 import AdminSettings from "@/pages/AdminSettings";
@@ -73,6 +74,16 @@ const App = () => (
                 <ProtectedRoute>
                   <DashboardLayout>
                     <ListingForm />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bulk"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <BulkListing />
                   </DashboardLayout>
                 </ProtectedRoute>
               }
