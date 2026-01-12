@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Canvas as FabricCanvas, FabricImage } from 'fabric';
+import { Canvas as FabricCanvas, FabricImage, filters } from 'fabric';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { RotateCw, RotateCcw, Crop, Check, X, FlipHorizontal, FlipVertical, ZoomIn, ZoomOut, Undo2, Redo2 } from 'lucide-react';
+import { RotateCw, RotateCcw, Crop, Check, X, FlipHorizontal, FlipVertical, ZoomIn, ZoomOut, Undo2, Redo2, Sun, Contrast, Palette, RotateCcwSquare } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 
@@ -15,6 +15,9 @@ interface ImageEditorProps {
 interface HistoryState {
   dataUrl: string;
   rotation: number;
+  brightness: number;
+  contrast: number;
+  saturation: number;
 }
 
 const MAX_HISTORY = 20;
@@ -25,6 +28,9 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) => {
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [fabricImage, setFabricImage] = useState<FabricImage | null>(null);
   const [rotation, setRotation] = useState(0);
+  const [brightness, setBrightness] = useState(0);
+  const [contrast, setContrast] = useState(0);
+  const [saturation, setSaturation] = useState(0);
   const [isCropping, setIsCropping] = useState(false);
   const [cropRect, setCropRect] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
   
@@ -50,6 +56,9 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) => {
     const newState: HistoryState = {
       dataUrl,
       rotation,
+      brightness,
+      contrast,
+      saturation,
     };
 
     setHistory(prev => {
@@ -65,7 +74,7 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) => {
     });
     
     setHistoryIndex(prev => Math.min(prev + 1, MAX_HISTORY - 1));
-  }, [fabricCanvas, rotation, historyIndex]);
+  }, [fabricCanvas, rotation, brightness, contrast, saturation, historyIndex]);
 
   // Restore state from history
   const restoreFromHistory = useCallback((state: HistoryState) => {
@@ -97,6 +106,9 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) => {
       fabricCanvas.renderAll();
       setFabricImage(img);
       setRotation(state.rotation);
+      setBrightness(state.brightness);
+      setContrast(state.contrast);
+      setSaturation(state.saturation);
       
       // Exit crop mode if active
       setIsCropping(false);
@@ -231,10 +243,103 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) => {
         multiplier: 1,
       });
       
-      setHistory([{ dataUrl, rotation: 0 }]);
+      setHistory([{ dataUrl, rotation: 0, brightness: 0, contrast: 0, saturation: 0 }]);
       setHistoryIndex(0);
     });
   }, [fabricCanvas, imageUrl]);
+
+  // Apply filters to image
+  const applyFilters = useCallback(() => {
+    if (!fabricImage || !fabricCanvas) return;
+
+    // Clear existing filters
+    fabricImage.filters = [];
+
+    // Add brightness filter (range: -1 to 1)
+    if (brightness !== 0) {
+      fabricImage.filters.push(new filters.Brightness({ brightness: brightness / 100 }));
+    }
+
+    // Add contrast filter (range: -1 to 1)
+    if (contrast !== 0) {
+      fabricImage.filters.push(new filters.Contrast({ contrast: contrast / 100 }));
+    }
+
+    // Add saturation filter (range: -1 to 1)
+    if (saturation !== 0) {
+      fabricImage.filters.push(new filters.Saturation({ saturation: saturation / 100 }));
+    }
+
+    fabricImage.applyFilters();
+    fabricCanvas.renderAll();
+  }, [fabricImage, fabricCanvas, brightness, contrast, saturation]);
+
+  // Apply filters whenever they change
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
+  // Handle brightness change with debounced history save
+  const brightnessTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const handleBrightnessChange = useCallback((value: number) => {
+    setBrightness(value);
+    
+    if (brightnessTimeoutRef.current) {
+      clearTimeout(brightnessTimeoutRef.current);
+    }
+    brightnessTimeoutRef.current = setTimeout(() => {
+      saveToHistory();
+    }, 300);
+  }, [saveToHistory]);
+
+  // Handle contrast change with debounced history save
+  const contrastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const handleContrastChange = useCallback((value: number) => {
+    setContrast(value);
+    
+    if (contrastTimeoutRef.current) {
+      clearTimeout(contrastTimeoutRef.current);
+    }
+    contrastTimeoutRef.current = setTimeout(() => {
+      saveToHistory();
+    }, 300);
+  }, [saveToHistory]);
+
+  // Handle saturation change with debounced history save
+  const saturationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const handleSaturationChange = useCallback((value: number) => {
+    setSaturation(value);
+    
+    if (saturationTimeoutRef.current) {
+      clearTimeout(saturationTimeoutRef.current);
+    }
+    saturationTimeoutRef.current = setTimeout(() => {
+      saveToHistory();
+    }, 300);
+  }, [saveToHistory]);
+
+  // Reset adjustments
+  const handleResetAdjustments = useCallback(() => {
+    setBrightness(0);
+    setContrast(0);
+    setSaturation(0);
+    
+    if (fabricImage && fabricCanvas) {
+      fabricImage.filters = [];
+      fabricImage.applyFilters();
+      fabricCanvas.renderAll();
+    }
+    
+    setTimeout(() => saveToHistory(), 50);
+    
+    toast({
+      title: 'Reset',
+      description: 'Adjustments reset to default',
+    });
+  }, [saveToHistory, fabricImage, fabricCanvas]);
 
   // Rotate image
   const handleRotate = useCallback((degrees: number) => {
@@ -436,17 +541,93 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) => {
         <canvas ref={canvasRef} />
       </div>
 
-      {/* Rotation Slider */}
-      <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">Rotation: {rotation}°</Label>
-        <Slider
-          value={[rotation]}
-          onValueChange={([value]) => handleSliderRotation(value)}
-          min={-180}
-          max={180}
-          step={1}
-          className="w-full"
-        />
+      {/* Adjustment Sliders */}
+      <div className="space-y-3">
+        {/* Rotation Slider */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+              <RotateCw className="h-3 w-3" />
+              Rotation: {rotation}°
+            </Label>
+          </div>
+          <Slider
+            value={[rotation]}
+            onValueChange={([value]) => handleSliderRotation(value)}
+            min={-180}
+            max={180}
+            step={1}
+            className="w-full"
+          />
+        </div>
+
+        {/* Brightness Slider */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Sun className="h-3 w-3" />
+              Brightness: {brightness > 0 ? '+' : ''}{brightness}
+            </Label>
+          </div>
+          <Slider
+            value={[brightness]}
+            onValueChange={([value]) => handleBrightnessChange(value)}
+            min={-100}
+            max={100}
+            step={1}
+            className="w-full"
+          />
+        </div>
+
+        {/* Contrast Slider */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Contrast className="h-3 w-3" />
+              Contrast: {contrast > 0 ? '+' : ''}{contrast}
+            </Label>
+          </div>
+          <Slider
+            value={[contrast]}
+            onValueChange={([value]) => handleContrastChange(value)}
+            min={-100}
+            max={100}
+            step={1}
+            className="w-full"
+          />
+        </div>
+
+        {/* Saturation Slider */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Palette className="h-3 w-3" />
+              Saturation: {saturation > 0 ? '+' : ''}{saturation}
+            </Label>
+          </div>
+          <Slider
+            value={[saturation]}
+            onValueChange={([value]) => handleSaturationChange(value)}
+            min={-100}
+            max={100}
+            step={1}
+            className="w-full"
+          />
+        </div>
+
+        {/* Reset Adjustments Button */}
+        {(brightness !== 0 || contrast !== 0 || saturation !== 0) && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleResetAdjustments}
+            className="w-full text-xs"
+          >
+            <RotateCcwSquare className="h-3 w-3 mr-1" />
+            Reset Adjustments
+          </Button>
+        )}
       </div>
 
       {/* Tool Buttons */}
