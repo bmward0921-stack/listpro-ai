@@ -1,12 +1,15 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Library, Search, Trash2, Package } from 'lucide-react';
+import { Library, Search, Trash2, Package, RefreshCw } from 'lucide-react';
 import { useProductLibrary, ProductTemplate } from '@/hooks/useProductLibrary';
+import { useListings } from '@/hooks/useListings';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,10 +26,13 @@ interface ProductLibraryPickerProps {
 }
 
 const ProductLibraryPicker = ({ onSelect }: ProductLibraryPickerProps) => {
+  const navigate = useNavigate();
   const { templates, loading, deleteFromLibrary } = useProductLibrary();
+  const { createListing } = useListings();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [relisting, setRelisting] = useState<string | null>(null);
 
   const filteredTemplates = templates.filter(t =>
     t.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -43,6 +49,43 @@ const ProductLibraryPicker = ({ onSelect }: ProductLibraryPickerProps) => {
     if (deleteId) {
       await deleteFromLibrary(deleteId);
       setDeleteId(null);
+    }
+  };
+
+  const handleRelist = async (template: ProductTemplate) => {
+    setRelisting(template.id);
+    try {
+      const newListing = await createListing({
+        title: template.title,
+        description: template.description || '',
+        costPrice: template.suggested_price || 0,
+        images: template.image_url ? [template.image_url] : [],
+        category: template.category || '',
+        quantity: 1,
+        platforms: [{
+          platform: 'facebook',
+          price: template.suggested_price || 0,
+          status: 'available',
+        }],
+      });
+      
+      if (newListing) {
+        toast({
+          title: 'Listing Created',
+          description: `"${template.title}" has been relisted as a draft.`,
+        });
+        setOpen(false);
+        navigate(`/listings/${newListing.id}`);
+      }
+    } catch (error) {
+      console.error('Error relisting:', error);
+      toast({
+        title: 'Relist Failed',
+        description: 'Could not create new listing from this product.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRelisting(null);
     }
   };
 
@@ -140,6 +183,16 @@ const ProductLibraryPicker = ({ onSelect }: ProductLibraryPickerProps) => {
                           }}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1"
+                          onClick={() => handleRelist(template)}
+                          disabled={relisting === template.id}
+                        >
+                          <RefreshCw className={`h-3 w-3 ${relisting === template.id ? 'animate-spin' : ''}`} />
+                          Relist
                         </Button>
                         <Button
                           size="sm"
