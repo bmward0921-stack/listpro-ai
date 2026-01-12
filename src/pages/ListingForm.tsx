@@ -381,8 +381,8 @@ const ListingForm = () => {
                 key={platform} 
                 className={`space-y-4 rounded-xl border-2 p-4 transition-all sm:p-5 ${
                   platformSettings[platform].enabled 
-                    ? 'border-primary/50 bg-primary/5' 
-                    : 'border-border bg-muted/20'
+                    ? 'border-primary/50' 
+                    : 'border-border'
                 }`}
               >
                 <div className="flex items-center justify-between gap-4">
