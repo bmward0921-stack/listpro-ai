@@ -16,7 +16,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Platform, PlatformListing, PLATFORM_LABELS, CATEGORIES } from '@/types/listing';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, ExternalLink, Link as LinkIcon } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import MultiImageUpload from '@/components/MultiImageUpload';
@@ -299,7 +299,7 @@ const ListingForm = () => {
                 </div>
 
                 {platformSettings[platform].enabled && (
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-3">
                     <div className="space-y-2">
                       <Label htmlFor={`${platform}-price`}>Selling Price ($)</Label>
                       <Input
@@ -321,48 +321,55 @@ const ListingForm = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor={`${platform}-url`}>{PLATFORM_LABELS[platform]} URL (optional)</Label>
-                      <Input
-                        id={`${platform}-url`}
-                        type="url"
-                        value={platformSettings[platform].url}
-                        onChange={(e) =>
-                          setPlatformSettings({
-                            ...platformSettings,
-                            [platform]: {
-                              ...platformSettings[platform],
-                              url: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder={
-                          platform === 'poshmark' 
-                            ? 'https://poshmark.com/listing/...' 
-                            : platform === 'facebook'
-                            ? 'https://facebook.com/marketplace/...'
-                            : platform === 'squarespace'
-                            ? 'https://yourstore.squarespace.com/...'
-                            : 'https://...'
-                        }
-                        pattern={
-                          platform === 'poshmark' 
-                            ? 'https://(www\\.)?poshmark\\.com/.*' 
-                            : platform === 'facebook'
-                            ? 'https://(www\\.)?(facebook\\.com|fb\\.com)/.*'
-                            : platform === 'squarespace'
-                            ? 'https://.*\\.squarespace\\.com/.*|https://.*'
-                            : undefined
-                        }
-                        title={
-                          platform === 'poshmark'
-                            ? 'Please enter a valid Poshmark URL (https://poshmark.com/...)'
-                            : platform === 'facebook'
-                            ? 'Please enter a valid Facebook URL (https://facebook.com/...)'
-                            : platform === 'squarespace'
-                            ? 'Please enter a valid Squarespace or custom domain URL'
-                            : undefined
-                        }
-                      />
+                      <div className="flex items-center gap-2">
+                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                        <Label htmlFor={`${platform}-url`}>
+                          Listing URL
+                          {platformSettings[platform].url && (
+                            <span className="ml-2 text-xs text-success">✓ Linked</span>
+                          )}
+                        </Label>
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          id={`${platform}-url`}
+                          type="url"
+                          value={platformSettings[platform].url}
+                          onChange={(e) =>
+                            setPlatformSettings({
+                              ...platformSettings,
+                              [platform]: {
+                                ...platformSettings[platform],
+                                url: e.target.value,
+                              },
+                            })
+                          }
+                          placeholder={
+                            platform === 'poshmark' 
+                              ? 'https://poshmark.com/listing/...' 
+                              : platform === 'facebook'
+                              ? 'https://facebook.com/marketplace/...'
+                              : platform === 'squarespace'
+                              ? 'https://yourstore.squarespace.com/...'
+                              : 'https://...'
+                          }
+                          className="flex-1"
+                        />
+                        {platformSettings[platform].url && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => window.open(platformSettings[platform].url, '_blank')}
+                            title="Open listing"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Paste the URL after listing on {PLATFORM_LABELS[platform]}
+                      </p>
                     </div>
                   </div>
                 )}
