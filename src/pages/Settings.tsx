@@ -14,7 +14,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { Save, Building2, Bell, Palette, Shield, Users, FileText } from 'lucide-react';
+import { Save, Building2, Bell, Palette, Shield, Users, Download } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { PLATFORM_LABELS, Platform } from '@/types/listing';
 import PlatformTemplateSettings from '@/components/PlatformTemplateSettings';
 
@@ -284,6 +285,27 @@ const Settings = () => {
               }
             />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Install App */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Download className="h-5 w-5 text-muted-foreground" />
+            <CardTitle>Install App</CardTitle>
+          </div>
+          <CardDescription>
+            Add StockSync to your home screen for quick access
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline" className="w-full sm:w-auto">
+            <Link to="/install">
+              <Download className="mr-2 h-4 w-4" />
+              Install StockSync
+            </Link>
+          </Button>
         </CardContent>
       </Card>
 

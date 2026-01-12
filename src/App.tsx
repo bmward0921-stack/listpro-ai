@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Login from "@/pages/Login";
+import Install from "@/pages/Install";
 import Dashboard from "@/pages/Dashboard";
 import Listings from "@/pages/Listings";
 import ListingDetail from "@/pages/ListingDetail";
@@ -28,6 +29,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/install" element={<Install />} />
             <Route
               path="/"
               element={
