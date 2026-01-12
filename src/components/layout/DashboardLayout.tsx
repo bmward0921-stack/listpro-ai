@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import stockSyncLogo from '@/assets/stocksync-logo.jpg';
 import {
   LayoutDashboard,
   Package,
@@ -64,9 +65,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-border px-6">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <Package className="h-4 w-4 text-primary-foreground" />
-            </div>
+            <img 
+              src={stockSyncLogo} 
+              alt="StockSync Logo" 
+              className="h-8 w-8 rounded-lg object-cover"
+            />
             <span className="font-semibold">StockSync</span>
           </Link>
           <Button
