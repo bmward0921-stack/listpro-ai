@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { account, isAppwriteConfigured, handleAppwriteError } from '@/lib/appwrite';
-import { Models } from 'appwrite';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
-  user: Models.User<Models.Preferences> | null;
+  user: User | null;
+  session: Session | null;
   loading: boolean;
   error: string | null;
-  isConfigured: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, name?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
@@ -24,85 +24,85 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const isConfigured = isAppwriteConfigured();
 
   const clearError = useCallback(() => setError(null), []);
 
   useEffect(() => {
-    if (!isConfigured) {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
       setLoading(false);
-      setError('Appwrite is not configured. Please set up environment variables.');
-      return;
-    }
+    });
 
-    const checkUser = async () => {
-      try {
-        const currentUser = await account.get();
-        setUser(currentUser);
-        setError(null);
-      } catch (err) {
-        // User is not logged in - this is expected, not an error
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-    checkUser();
-  }, [isConfigured]);
+    return () => subscription.unsubscribe();
+  }, []);
 
   const login = useCallback(async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    if (!isConfigured) {
-      return { success: false, error: 'Appwrite is not configured' };
-    }
-
     try {
       setError(null);
-      await account.createEmailPasswordSession(email, password);
-      const currentUser = await account.get();
-      setUser(currentUser);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        setError(error.message);
+        return { success: false, error: error.message };
+      }
+      
       return { success: true };
     } catch (err) {
-      const errorMessage = handleAppwriteError(err);
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     }
-  }, [isConfigured]);
+  }, []);
 
   const signup = useCallback(async (
     email: string, 
     password: string, 
     name?: string
   ): Promise<{ success: boolean; error?: string }> => {
-    if (!isConfigured) {
-      return { success: false, error: 'Appwrite is not configured' };
-    }
-
     try {
       setError(null);
-      await account.create('unique()', email, password, name);
-      // Auto-login after signup
-      await account.createEmailPasswordSession(email, password);
-      const currentUser = await account.get();
-      setUser(currentUser);
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: { full_name: name }
+        }
+      });
+      
+      if (error) {
+        setError(error.message);
+        return { success: false, error: error.message };
+      }
+      
       return { success: true };
     } catch (err) {
-      const errorMessage = handleAppwriteError(err);
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     }
-  }, [isConfigured]);
+  }, []);
 
   const logout = useCallback(async () => {
     try {
-      await account.deleteSession('current');
+      await supabase.auth.signOut();
     } catch (err) {
-      console.error('Logout error:', handleAppwriteError(err));
+      console.error('Logout error:', err);
     } finally {
       setUser(null);
+      setSession(null);
       setError(null);
     }
   }, []);
@@ -111,9 +111,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider 
       value={{ 
         user, 
+        session,
         loading, 
         error, 
-        isConfigured,
         login, 
         signup,
         logout,

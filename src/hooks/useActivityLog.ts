@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Query } from 'appwrite';
-import { databases, APPWRITE_DATABASE_ID, ID, APPWRITE_ACTIVITY_COLLECTION_ID } from '@/lib/appwrite';
+import { supabase } from '@/integrations/supabase/client';
 import { ActivityLog, ActivityAction } from '@/types/activity';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -11,7 +10,8 @@ export const useActivityLog = (listingId?: string) => {
   const { user } = useAuth();
 
   const fetchActivities = useCallback(async () => {
-    if (!APPWRITE_DATABASE_ID || !APPWRITE_ACTIVITY_COLLECTION_ID) {
+    if (!user) {
+      setActivities([]);
       setLoading(false);
       return;
     }
@@ -20,25 +20,41 @@ export const useActivityLog = (listingId?: string) => {
     setError(null);
 
     try {
-      const queries = [Query.orderDesc('$createdAt'), Query.limit(50)];
+      let query = supabase
+        .from('activity_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
       
       if (listingId) {
-        queries.push(Query.equal('listingId', listingId));
+        query = query.eq('entity_id', listingId);
       }
 
-      const response = await databases.listDocuments(
-        APPWRITE_DATABASE_ID,
-        APPWRITE_ACTIVITY_COLLECTION_ID,
-        queries
-      );
+      const { data, error: fetchError } = await query;
 
-      setActivities(response.documents as unknown as ActivityLog[]);
+      if (fetchError) throw fetchError;
+
+      // Transform to match ActivityLog interface
+      const transformedActivities: ActivityLog[] = (data || []).map(item => ({
+        id: item.id,
+        created_at: item.created_at,
+        listing_id: item.entity_id || '',
+        listing_title: (item.details as any)?.title || '',
+        user_id: item.user_id,
+        user_email: (item.details as any)?.userEmail || '',
+        action: item.action as ActivityAction,
+        details: (item.details as any)?.description || '',
+        old_value: (item.details as any)?.oldValue || '',
+        new_value: (item.details as any)?.newValue || '',
+      }));
+
+      setActivities(transformedActivities);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch activities');
     } finally {
       setLoading(false);
     }
-  }, [listingId]);
+  }, [listingId, user]);
 
   useEffect(() => {
     fetchActivities();
@@ -52,34 +68,32 @@ export const useActivityLog = (listingId?: string) => {
     oldValue?: string,
     newValue?: string
   ): Promise<void> => {
-    if (!APPWRITE_DATABASE_ID || !APPWRITE_ACTIVITY_COLLECTION_ID || !user) {
-      console.warn('Activity logging not configured or user not authenticated');
+    if (!user) {
+      console.warn('Activity logging: user not authenticated');
       return;
     }
 
     try {
-      const activityData = {
-        listingId,
-        listingTitle,
-        userId: user.$id,
-        userEmail: user.email,
-        action,
-        details: details || '',
-        oldValue: oldValue || '',
-        newValue: newValue || '',
-      };
+      const { error: insertError } = await supabase
+        .from('activity_logs')
+        .insert({
+          user_id: user.id,
+          action,
+          entity_type: 'listing',
+          entity_id: listingId,
+          details: {
+            title: listingTitle,
+            userEmail: user.email,
+            description: details || '',
+            oldValue: oldValue || '',
+            newValue: newValue || '',
+          },
+        });
 
-      await databases.createDocument(
-        APPWRITE_DATABASE_ID,
-        APPWRITE_ACTIVITY_COLLECTION_ID,
-        ID.unique(),
-        activityData
-      );
+      if (insertError) throw insertError;
 
-      // Refresh activities if we're viewing them
-      if (!listingId || listingId === activityData.listingId) {
-        fetchActivities();
-      }
+      // Refresh activities
+      fetchActivities();
     } catch (err: any) {
       console.error('Failed to log activity:', err.message);
     }

@@ -42,6 +42,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     }
   };
 
+  const displayName = user?.user_metadata?.full_name || 'Team Member';
+
   return (
     <div className="flex min-h-screen bg-background">
       {/* Mobile sidebar backdrop */}
@@ -107,7 +109,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               <User className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1 truncate">
-              <p className="truncate text-sm font-medium">{user?.name || 'Team Member'}</p>
+              <p className="truncate text-sm font-medium">{displayName}</p>
               <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
             </div>
           </div>

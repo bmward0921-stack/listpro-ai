@@ -6,16 +6,16 @@ export type ActivityAction =
   | 'price_changed';
 
 export interface ActivityLog {
-  $id: string;
-  $createdAt: string;
-  listingId: string;
-  listingTitle: string;
-  userId: string;
-  userEmail: string;
+  id: string;
+  created_at: string;
+  listing_id: string;
+  listing_title: string;
+  user_id: string;
+  user_email: string;
   action: ActivityAction;
   details?: string;
-  oldValue?: string;
-  newValue?: string;
+  old_value?: string;
+  new_value?: string;
 }
 
 export const ACTION_LABELS: Record<ActivityAction, string> = {

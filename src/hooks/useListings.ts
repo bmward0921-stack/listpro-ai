@@ -1,9 +1,62 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Query } from 'appwrite';
-import { databases, APPWRITE_DATABASE_ID, APPWRITE_LISTINGS_COLLECTION_ID } from '@/lib/appwrite';
-import { Listing, ListingFormData, Platform, ListingStatus } from '@/types/listing';
+import { supabase } from '@/integrations/supabase/client';
+import { Listing, ListingFormData, Platform, ListingStatus, PlatformListing } from '@/types/listing';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminSettings } from './useAdminSettings';
+
+interface DbListing {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  price: number | null;
+  status: string;
+  platform: string | null;
+  sku: string | null;
+  quantity: number | null;
+  images: string[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Transform DB listing to app listing format
+const transformListing = (dbListing: DbListing): Listing => {
+  // Parse platforms from localStorage cache or create default
+  const storedPlatforms = localStorage.getItem(`listing_platforms_${dbListing.id}`);
+  let platforms: PlatformListing[] = [];
+  
+  if (storedPlatforms) {
+    try {
+      platforms = JSON.parse(storedPlatforms);
+    } catch {
+      platforms = [];
+    }
+  }
+  
+  // If no platforms stored, create one from the db fields
+  if (platforms.length === 0 && dbListing.platform) {
+    platforms = [{
+      platform: dbListing.platform as Platform,
+      price: dbListing.price || 0,
+      status: dbListing.status as ListingStatus,
+    }];
+  }
+
+  return {
+    id: dbListing.id,
+    created_at: dbListing.created_at,
+    updated_at: dbListing.updated_at,
+    title: dbListing.title,
+    description: dbListing.description || '',
+    images: dbListing.images || [],
+    category: '',
+    costPrice: dbListing.price || 0,
+    sku: dbListing.sku || undefined,
+    quantity: dbListing.quantity || 1,
+    platforms,
+    user_id: dbListing.user_id,
+  };
+};
 
 export const useListings = () => {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -12,8 +65,8 @@ export const useListings = () => {
   const { user } = useAuth();
 
   const fetchListings = useCallback(async () => {
-    if (!APPWRITE_DATABASE_ID || !APPWRITE_LISTINGS_COLLECTION_ID) {
-      setError('Appwrite database configuration missing. Please check your environment variables.');
+    if (!user) {
+      setListings([]);
       setLoading(false);
       return;
     }
@@ -21,103 +74,105 @@ export const useListings = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await databases.listDocuments(
-        APPWRITE_DATABASE_ID,
-        APPWRITE_LISTINGS_COLLECTION_ID,
-        [Query.orderDesc('$createdAt')]
-      );
+      const { data, error: fetchError } = await supabase
+        .from('listings')
+        .select('*')
+        .order('created_at', { ascending: false });
       
-      // Parse JSON strings back to arrays
-      const parsedListings = response.documents.map((doc: any) => ({
-        ...doc,
-        platforms: typeof doc.platforms === 'string' ? JSON.parse(doc.platforms) : doc.platforms,
-        images: typeof doc.images === 'string' ? JSON.parse(doc.images) : (doc.images || []),
-      })) as Listing[];
+      if (fetchError) throw fetchError;
       
-      setListings(parsedListings);
+      const transformedListings = (data || []).map(transformListing);
+      setListings(transformedListings);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch listings');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchListings();
   }, [fetchListings]);
 
   const createListing = async (data: ListingFormData): Promise<Listing> => {
-    if (!APPWRITE_DATABASE_ID || !APPWRITE_LISTINGS_COLLECTION_ID) {
-      throw new Error('Appwrite database configuration missing');
-    }
+    if (!user) throw new Error('User not authenticated');
 
-    // Appwrite requires complex arrays to be stored as JSON strings
-    const documentData = {
-      ...data,
-      platforms: JSON.stringify(data.platforms),
-      images: JSON.stringify(data.images || []),
-      userId: user?.$id || '',
-    };
+    const primaryPlatform = data.platforms[0];
+    
+    const { data: newListing, error: insertError } = await supabase
+      .from('listings')
+      .insert({
+        user_id: user.id,
+        title: data.title,
+        description: data.description,
+        price: data.costPrice,
+        status: primaryPlatform?.status || 'draft',
+        platform: primaryPlatform?.platform || null,
+        sku: data.sku || null,
+        quantity: data.quantity,
+        images: data.images,
+      })
+      .select()
+      .single();
 
-    const response = await databases.createDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_LISTINGS_COLLECTION_ID,
-      'unique()',
-      documentData
-    );
+    if (insertError) throw insertError;
 
-    const newListing = {
-      ...response,
-      platforms: data.platforms,
-      images: data.images || [],
-    } as unknown as Listing;
+    // Store platforms in localStorage for now (complex array)
+    localStorage.setItem(`listing_platforms_${newListing.id}`, JSON.stringify(data.platforms));
 
-    setListings(prev => [newListing, ...prev]);
-    return newListing;
+    const transformed = transformListing(newListing);
+    transformed.platforms = data.platforms;
+    
+    setListings(prev => [transformed, ...prev]);
+    return transformed;
   };
 
   const updateListing = async (id: string, data: Partial<ListingFormData>): Promise<Listing> => {
-    if (!APPWRITE_DATABASE_ID || !APPWRITE_LISTINGS_COLLECTION_ID) {
-      throw new Error('Appwrite database configuration missing');
+    if (!user) throw new Error('User not authenticated');
+
+    const updateData: any = {};
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.costPrice !== undefined) updateData.price = data.costPrice;
+    if (data.sku !== undefined) updateData.sku = data.sku;
+    if (data.quantity !== undefined) updateData.quantity = data.quantity;
+    if (data.images !== undefined) updateData.images = data.images;
+    
+    if (data.platforms && data.platforms.length > 0) {
+      updateData.platform = data.platforms[0].platform;
+      updateData.status = data.platforms[0].status;
+      updateData.price = data.platforms[0].price || data.costPrice;
+      localStorage.setItem(`listing_platforms_${id}`, JSON.stringify(data.platforms));
     }
 
-    const updateData: any = { ...data };
+    const { data: updatedListing, error: updateError } = await supabase
+      .from('listings')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    const transformed = transformListing(updatedListing);
     if (data.platforms) {
-      updateData.platforms = JSON.stringify(data.platforms);
-    }
-    if (data.images) {
-      updateData.images = JSON.stringify(data.images);
+      transformed.platforms = data.platforms;
     }
 
-    const response = await databases.updateDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_LISTINGS_COLLECTION_ID,
-      id,
-      updateData
-    );
-
-    const updatedListing = {
-      ...response,
-      platforms: data.platforms || (typeof response.platforms === 'string' ? JSON.parse(response.platforms) : response.platforms),
-      images: data.images || (typeof response.images === 'string' ? JSON.parse(response.images) : (response.images || [])),
-    } as unknown as Listing;
-
-    setListings(prev => prev.map(l => l.$id === id ? updatedListing : l));
-    return updatedListing;
+    setListings(prev => prev.map(l => l.id === id ? transformed : l));
+    return transformed;
   };
 
   const deleteListing = async (id: string): Promise<void> => {
-    if (!APPWRITE_DATABASE_ID || !APPWRITE_LISTINGS_COLLECTION_ID) {
-      throw new Error('Appwrite database configuration missing');
-    }
-
-    await databases.deleteDocument(
-      APPWRITE_DATABASE_ID,
-      APPWRITE_LISTINGS_COLLECTION_ID,
-      id
-    );
+    const { error: deleteError } = await supabase
+      .from('listings')
+      .delete()
+      .eq('id', id);
     
-    setListings(prev => prev.filter(l => l.$id !== id));
+    if (deleteError) throw deleteError;
+    
+    localStorage.removeItem(`listing_platforms_${id}`);
+    setListings(prev => prev.filter(l => l.id !== id));
   };
 
   const updatePlatformStatus = async (
@@ -125,7 +180,7 @@ export const useListings = () => {
     platform: Platform,
     status: ListingStatus
   ): Promise<void> => {
-    const listing = listings.find(l => l.$id === listingId);
+    const listing = listings.find(l => l.id === listingId);
     if (!listing) throw new Error('Listing not found');
 
     const updatedPlatforms = listing.platforms.map(p =>
@@ -151,7 +206,7 @@ export const useListings = () => {
 
 // Analytics helpers with platform fees
 export const useListingStats = (listings: Listing[]) => {
-  const { calculatePlatformFee, calculateNetRevenue, loading: settingsLoading } = useAdminSettings();
+  const { calculatePlatformFee, loading: settingsLoading } = useAdminSettings();
   
   return useMemo(() => {
     const totalListings = listings.length;

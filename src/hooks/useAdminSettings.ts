@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Platform } from '@/types/listing';
-
-const ADMIN_SETTINGS_KEY = 'listinghub_admin_settings';
 
 export interface PlatformFee {
   platform: Platform;
@@ -46,19 +46,57 @@ const defaultAdminSettings: AdminSettings = {
 export const useAdminSettings = () => {
   const [settings, setSettings] = useState<AdminSettings>(defaultAdminSettings);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  const fetchSettings = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('settings')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data?.settings && typeof data.settings === 'object') {
+        setSettings({ ...defaultAdminSettings, ...(data.settings as unknown as AdminSettings) });
+      }
+    } catch (err) {
+      console.error('Failed to fetch settings:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    const stored = localStorage.getItem(ADMIN_SETTINGS_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        setSettings({ ...defaultAdminSettings, ...parsed });
-      } catch (e) {
-        console.error('Failed to parse admin settings');
-      }
+    fetchSettings();
+  }, [fetchSettings]);
+
+  const updateSettings = async (newSettings: Partial<AdminSettings>) => {
+    if (!user) return;
+
+    const updatedSettings = { ...settings, ...newSettings };
+    
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase
+        .from('user_settings') as any)
+        .upsert(
+          { user_id: user.id, settings: updatedSettings },
+          { onConflict: 'user_id' }
+        );
+
+      if (error) throw error;
+      setSettings(updatedSettings);
+    } catch (err) {
+      console.error('Failed to update settings:', err);
     }
-    setLoading(false);
-  }, []);
+  };
 
   // Get platform fee for a specific platform
   const getPlatformFee = (platform: Platform): PlatformFee => {
@@ -88,6 +126,7 @@ export const useAdminSettings = () => {
   return {
     settings,
     loading,
+    updateSettings,
     getPlatformFee,
     calculatePlatformFee,
     calculateNetRevenue,
@@ -95,5 +134,4 @@ export const useAdminSettings = () => {
   };
 };
 
-// Export types and constants for reuse
-export { ADMIN_SETTINGS_KEY, defaultAdminSettings };
+export { defaultAdminSettings };
