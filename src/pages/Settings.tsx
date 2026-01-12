@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { Save, Building2, Bell, Palette, Shield, Users } from 'lucide-react';
+import { Save, Building2, Bell, Palette, Shield, Users, FileText } from 'lucide-react';
 import { PLATFORM_LABELS, Platform } from '@/types/listing';
+import PlatformTemplateSettings from '@/components/PlatformTemplateSettings';
 
 // Settings stored in localStorage for demo - in production, store in Appwrite
 const SETTINGS_KEY = 'listinghub_settings';
@@ -285,6 +286,9 @@ const Settings = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Platform Templates */}
+      <PlatformTemplateSettings />
 
       {/* Team Members Info */}
       <Card>
