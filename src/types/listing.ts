@@ -1,4 +1,4 @@
-export type Platform = 'facebook' | 'poshmark' | 'squarespace';
+export type Platform = 'facebook' | 'poshmark' | 'squarespace' | 'ebay';
 
 export type ListingStatus = 'available' | 'sold' | 'reserved' | 'archived';
 
@@ -46,9 +46,10 @@ export const getPrimaryImage = (listing: Listing | ListingFormData): string | un
 };
 
 export const PLATFORM_LABELS: Record<Platform, string> = {
-  facebook: 'Facebook Marketplace',
+  facebook: 'FB Market',
   poshmark: 'Poshmark',
   squarespace: 'Squarespace',
+  ebay: 'eBay',
 };
 
 export const STATUS_LABELS: Record<ListingStatus, string> = {

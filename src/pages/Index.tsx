@@ -19,9 +19,10 @@ import { getPrimaryImage, PLATFORM_LABELS, Platform } from "@/types/listing";
 import StatusBadge from "@/components/StatusBadge";
 
 const platformStyles: Record<Platform, string> = {
-  facebook: "bg-blue-600 text-white",
-  poshmark: "bg-rose-500 text-white",
-  squarespace: "bg-slate-700 text-white",
+  facebook: "bg-info text-info-foreground",
+  poshmark: "bg-primary text-primary-foreground",
+  squarespace: "bg-muted text-muted-foreground",
+  ebay: "bg-success text-success-foreground",
 };
 
 const externalPlatforms = [

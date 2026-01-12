@@ -7,9 +7,10 @@ interface PlatformBadgeProps {
 }
 
 const platformColors: Record<Platform, string> = {
-  facebook: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-  poshmark: 'bg-rose-500/10 text-rose-600 border-rose-500/20',
-  squarespace: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
+  facebook: 'bg-info/15 text-info border-info/30',
+  poshmark: 'bg-primary/15 text-primary border-primary/30',
+  squarespace: 'bg-muted text-muted-foreground border-border',
+  ebay: 'bg-success/15 text-success border-success/30',
 };
 
 const PlatformBadge: React.FC<PlatformBadgeProps> = ({ platform, className }) => {

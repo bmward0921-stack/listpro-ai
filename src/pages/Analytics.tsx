@@ -20,9 +20,10 @@ import { TrendingUp, DollarSign, Percent, ShoppingBag, Receipt } from 'lucide-re
 import StatCard from '@/components/ui/stat-card';
 
 const PLATFORM_COLORS: Record<Platform, string> = {
-  facebook: '#3b82f6',
-  poshmark: '#f43f5e',
-  squarespace: '#64748b',
+  facebook: 'hsl(210, 70%, 50%)',
+  poshmark: 'hsl(0, 65%, 40%)',
+  squarespace: 'hsl(220, 15%, 50%)',
+  ebay: 'hsl(142, 70%, 45%)',
 };
 
 const Analytics = () => {
