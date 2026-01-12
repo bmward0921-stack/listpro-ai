@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ExternalLink, Plus, Package, ArrowRight, Search } from "lucide-react";
+import { ExternalLink, Plus, Package, ArrowRight, Search, Camera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -42,9 +42,41 @@ const Index = () => {
   const { user } = useAuth();
   const { listings, loading } = useListings();
   const [search, setSearch] = useState("");
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openPlatform = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleCameraClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+    
+    const newImages: string[] = [];
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          newImages.push(event.target.result as string);
+          if (newImages.length === files.length) {
+            setUploadedImages((prev) => [...prev, ...newImages]);
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    // Reset input to allow selecting same files again
+    e.target.value = "";
+  };
+
+  const removeImage = (index: number) => {
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   // Filter listings by search term
@@ -62,10 +94,54 @@ const Index = () => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      {/* Hidden file input */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept="image/*"
+        multiple
+        className="hidden"
+      />
+
+      {/* Camera Button Header */}
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <h1 className="text-xl font-bold">StockSync</h1>
+        <Button variant="info" size="icon" onClick={handleCameraClick}>
+          <Camera className="h-5 w-5" />
+        </Button>
+      </div>
+
+      {/* Uploaded Images Preview */}
+      {uploadedImages.length > 0 && (
+        <div className="border-b bg-muted/30 px-4 py-3">
+          <p className="mb-2 text-sm font-medium text-muted-foreground">
+            Uploaded Images ({uploadedImages.length})
+          </p>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            {uploadedImages.map((img, index) => (
+              <div key={index} className="relative shrink-0">
+                <img
+                  src={img}
+                  alt={`Upload ${index + 1}`}
+                  className="h-20 w-20 rounded-lg object-cover"
+                />
+                <button
+                  onClick={() => removeImage(index)}
+                  className="absolute -right-1 -top-1 rounded-full bg-destructive p-1 text-white shadow-md hover:bg-destructive/90"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
         <div className="text-center">
-          <h1 className="mb-4 text-4xl font-bold">Welcome to StockSync</h1>
+          <h1 className="mb-4">Welcome to StockSync</h1>
           <p className="text-xl text-muted-foreground">
             Manage and cross-list your inventory across platforms
           </p>
