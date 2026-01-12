@@ -2,6 +2,8 @@ import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useListings } from '@/hooks/useListings';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
+import { useSwipeNavigation } from '@/hooks/useSwipeNavigation';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +26,8 @@ import {
   TrendingUp,
   CheckCircle,
   Receipt,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 import {
@@ -42,11 +46,37 @@ import { toast } from '@/hooks/use-toast';
 const ListingDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { listings, loading, deleteListing, updatePlatformStatus } = useListings();
   const { activities, loading: activitiesLoading, logActivity } = useActivityLog(id);
   const { calculatePlatformFee, calculateNetRevenue, getPlatformFee } = useAdminSettings();
   
   const listing = listings.find((l) => l.id === id);
+  
+  // Find current listing index for navigation
+  const currentIndex = listings.findIndex((l) => l.id === id);
+  const prevListing = currentIndex > 0 ? listings[currentIndex - 1] : null;
+  const nextListing = currentIndex < listings.length - 1 ? listings[currentIndex + 1] : null;
+
+  const navigateToPrev = () => {
+    if (prevListing) {
+      navigate(`/listings/${prevListing.id}`);
+    }
+  };
+
+  const navigateToNext = () => {
+    if (nextListing) {
+      navigate(`/listings/${nextListing.id}`);
+    }
+  };
+
+  // Swipe navigation for mobile
+  const { isSwiping, swipeOffset } = useSwipeNavigation({
+    onSwipeLeft: navigateToNext,
+    onSwipeRight: navigateToPrev,
+    threshold: 75,
+    enabled: isMobile && !loading && !!listing,
+  });
 
   const handleDelete = async () => {
     if (!id || !listing) return;
@@ -107,7 +137,37 @@ const ListingDetail = () => {
   const profitMargin = totalGrossRevenue > 0 ? ((profit / totalGrossRevenue) * 100).toFixed(1) : '0';
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div 
+      className="mx-auto max-w-4xl space-y-6"
+      style={{
+        transform: isSwiping ? `translateX(${swipeOffset * 0.3}px)` : 'translateX(0)',
+        opacity: isSwiping ? 1 - Math.abs(swipeOffset) / 300 : 1,
+        transition: isSwiping ? 'none' : 'transform 0.3s ease-out, opacity 0.3s ease-out',
+      }}
+    >
+      {/* Swipe Indicator - Mobile only */}
+      {isMobile && (prevListing || nextListing) && (
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-1">
+            {prevListing && (
+              <>
+                <ChevronLeft className="h-4 w-4" />
+                <span className="truncate max-w-[100px]">Swipe for prev</span>
+              </>
+            )}
+          </div>
+          <span className="text-center">{currentIndex + 1} of {listings.length}</span>
+          <div className="flex items-center gap-1">
+            {nextListing && (
+              <>
+                <span className="truncate max-w-[100px]">Swipe for next</span>
+                <ChevronRight className="h-4 w-4" />
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex items-start gap-4">
@@ -358,6 +418,36 @@ const ListingDetail = () => {
           </Card>
         </div>
       </div>
+
+      {/* Mobile Navigation Arrows */}
+      {isMobile && (prevListing || nextListing) && (
+        <div className="fixed bottom-20 left-0 right-0 z-40 flex justify-between px-4 pointer-events-none">
+          {prevListing ? (
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={navigateToPrev}
+              className="h-12 w-12 rounded-full shadow-lg pointer-events-auto"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </Button>
+          ) : (
+            <div />
+          )}
+          {nextListing ? (
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={navigateToNext}
+              className="h-12 w-12 rounded-full shadow-lg pointer-events-auto"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </Button>
+          ) : (
+            <div />
+          )}
+        </div>
+      )}
     </div>
   );
 };
