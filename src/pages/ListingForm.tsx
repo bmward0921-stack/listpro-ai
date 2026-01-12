@@ -21,6 +21,7 @@ import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import MultiImageUpload from '@/components/MultiImageUpload';
 import { getPrimaryImage } from '@/types/listing';
+import AIDescriptionGenerator from '@/components/AIDescriptionGenerator';
 
 const PLATFORMS: Platform[] = ['facebook', 'poshmark', 'squarespace'];
 
@@ -150,7 +151,15 @@ const ListingForm = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="description">Description</Label>
+                <AIDescriptionGenerator
+                  title={formData.title}
+                  category={formData.category}
+                  currentDescription={formData.description}
+                  onDescriptionGenerated={(desc) => setFormData({ ...formData, description: desc })}
+                />
+              </div>
               <Textarea
                 id="description"
                 value={formData.description}
