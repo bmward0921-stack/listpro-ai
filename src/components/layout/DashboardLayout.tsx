@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import stockSyncLogo from '@/assets/stocksync-logo.jpg';
+import MobileBottomNav from './MobileBottomNav';
 import {
   LayoutDashboard,
   Package,
@@ -15,7 +16,6 @@ import {
   LogOut,
   Menu,
   X,
-  Plus,
 } from 'lucide-react';
 
 interface DashboardLayoutProps {
@@ -138,22 +138,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </nav>
         </aside>
 
-        {/* Main content */}
-        <main className="flex-1 overflow-auto p-6">{children}</main>
-
-        {/* Floating Action Button for Quick Add - Mobile only */}
-        {location.pathname !== '/listings/new' && (
-          <Link to="/listings/new" className="fixed bottom-6 right-6 z-50 lg:hidden">
-            <Button
-              size="lg"
-              className="h-14 w-14 rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-shadow"
-            >
-              <Plus className="h-6 w-6" />
-              <span className="sr-only">Add new listing</span>
-            </Button>
-          </Link>
-        )}
+        {/* Main content - add bottom padding for mobile nav */}
+        <main className="flex-1 overflow-auto p-6 pb-24 lg:pb-6">{children}</main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   );
 };
