@@ -163,19 +163,19 @@ const ListingForm = () => {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
+    <div className="mx-auto max-w-3xl space-y-4 px-2 sm:space-y-6 sm:px-0">
+      {/* Header - responsive for portrait/landscape */}
+      <div className="flex items-center gap-2 sm:gap-4">
+        <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" asChild>
           <Link to="/listings">
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-bold sm:text-2xl landscape:text-lg md:text-3xl">
             {isEditing ? 'Edit Listing' : 'New Listing'}
           </h1>
-          <p className="mt-1 text-muted-foreground">
+          <p className="mt-0.5 truncate text-xs text-muted-foreground sm:mt-1 sm:text-sm">
             {isEditing ? 'Update your listing details' : 'Add a new product to your inventory'}
           </p>
         </div>
@@ -184,9 +184,9 @@ const ListingForm = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Product Details */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle>Product Details</CardTitle>
-            <div className="flex flex-wrap gap-2">
+          <CardHeader className="flex flex-col gap-2 space-y-0 p-3 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <CardTitle className="text-base sm:text-lg">Product Details</CardTitle>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               <PlatformCopyButtons
                 title={formData.title}
                 description={formData.description}
@@ -237,7 +237,7 @@ const ListingForm = () => {
               />
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 p-3 pt-0 sm:space-y-4 sm:p-6 sm:pt-0">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="title">Title</Label>
@@ -310,14 +310,14 @@ const ListingForm = () => {
               maxImages={10}
             />
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+            <div className="grid gap-3 landscape:grid-cols-2 sm:grid-cols-2 sm:gap-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="category" className="text-sm">Category</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(v) => setFormData({ ...formData, category: v })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 sm:h-10">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -328,36 +328,39 @@ const ListingForm = () => {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="costPrice">Cost Price ($)</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="costPrice" className="text-sm">Cost Price ($)</Label>
                 <Input
                   id="costPrice"
                   type="number"
                   min="0"
                   step="0.01"
+                  className="h-9 sm:h-10"
                   value={formData.costPrice}
                   onChange={(e) => setFormData({ ...formData, costPrice: parseFloat(e.target.value) || 0 })}
                 />
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="sku">SKU (optional)</Label>
+            <div className="grid gap-3 landscape:grid-cols-2 sm:grid-cols-2 sm:gap-4">
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="sku" className="text-sm">SKU (optional)</Label>
                 <Input
                   id="sku"
+                  className="h-9 sm:h-10"
                   value={formData.sku}
                   onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   placeholder="ABC-123"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="quantity">Quantity</Label>
+              <div className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor="quantity" className="text-sm">Quantity</Label>
                 <Input
                   id="quantity"
                   type="number"
                   min="1"
+                  className="h-9 sm:h-10"
                   value={formData.quantity}
                   onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
                 />
@@ -368,12 +371,12 @@ const ListingForm = () => {
 
         {/* Platform Settings */}
         <Card>
-          <CardHeader>
-            <CardTitle>Platform Settings</CardTitle>
+          <CardHeader className="p-3 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">Platform Settings</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-4 p-3 pt-0 sm:space-y-6 sm:p-6 sm:pt-0">
             {PLATFORMS.map((platform) => (
-              <div key={platform} className="space-y-4 rounded-lg border border-border p-4">
+              <div key={platform} className="space-y-3 rounded-lg border border-border p-3 sm:space-y-4 sm:p-4">
                 <div className="flex items-center justify-between">
                   <Label htmlFor={`${platform}-enabled`} className="text-base font-medium">
                     {PLATFORM_LABELS[platform]}
@@ -472,19 +475,19 @@ const ListingForm = () => {
 
         {/* Actions */}
         <div className="flex justify-end gap-3">
-          <Button type="button" variant="outline" asChild>
+          <Button type="button" variant="outline" size="sm" className="sm:size-default" asChild>
             <Link to="/listings">Cancel</Link>
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" size="sm" className="sm:size-default" disabled={loading}>
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin sm:mr-2 sm:h-4 sm:w-4" />
+                <span className="text-sm">Saving...</span>
               </>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" />
-                {isEditing ? 'Update Listing' : 'Create Listing'}
+                <Save className="mr-1.5 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
+                <span className="text-sm">{isEditing ? 'Update' : 'Create'}</span>
               </>
             )}
           </Button>
