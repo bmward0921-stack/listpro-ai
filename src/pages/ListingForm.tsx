@@ -496,7 +496,7 @@ const ListingForm = () => {
         </Card>
 
         {/* Actions - sticky on mobile for easy access */}
-        <div className="sticky bottom-20 z-40 -mx-2 bg-background/95 px-2 py-3 backdrop-blur-sm landscape:bottom-24 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none lg:bottom-0">
+        <div className="sticky bottom-4 z-40 -mx-2 bg-background/95 px-2 py-3 backdrop-blur-sm sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" size="sm" className="sm:size-default" asChild>
               <Link to="/listings">Cancel</Link>
