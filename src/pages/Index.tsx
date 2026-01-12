@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ExternalLink, Plus, Package, ArrowRight } from "lucide-react";
+import { ExternalLink, Plus, Package, ArrowRight, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useListings } from "@/hooks/useListings";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPrimaryImage, PLATFORM_LABELS, Platform } from "@/types/listing";
@@ -39,13 +41,24 @@ const externalPlatforms = [
 const Index = () => {
   const { user } = useAuth();
   const { listings, loading } = useListings();
+  const [search, setSearch] = useState("");
 
   const openPlatform = (url: string) => {
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  // Filter listings by search term
+  const filteredListings = listings.filter((listing) => {
+    if (!search.trim()) return true;
+    const searchLower = search.toLowerCase();
+    return (
+      listing.title.toLowerCase().includes(searchLower) ||
+      (listing.sku && listing.sku.toLowerCase().includes(searchLower))
+    );
+  });
+
   // Show recent listings (limit to 6)
-  const recentListings = listings.slice(0, 6);
+  const recentListings = filteredListings.slice(0, 6);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -61,8 +74,21 @@ const Index = () => {
         {/* Listings Section */}
         {user && (
           <div className="mt-12 w-full max-w-5xl">
+            {/* Search Bar */}
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by title or SKU..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Recent Listings</h2>
+              <h2 className="text-2xl font-semibold">
+                {search ? `Results for "${search}"` : "Recent Listings"}
+              </h2>
               <Button variant="outline" asChild>
                 <Link to="/listings">
                   View All
