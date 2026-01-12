@@ -16,7 +16,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Platform, PlatformListing, PLATFORM_LABELS, CATEGORIES } from '@/types/listing';
-import { ArrowLeft, Save, Loader2, ExternalLink, Link as LinkIcon } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, ExternalLink, Link as LinkIcon, Copy, Check } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
 import MultiImageUpload from '@/components/MultiImageUpload';
@@ -42,6 +42,18 @@ const ListingForm = () => {
     : [];
 
   const [loading, setLoading] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      toast({ title: 'Copied!', description: `${field} copied to clipboard.` });
+      setTimeout(() => setCopiedField(null), 2000);
+    } catch (err) {
+      toast({ title: 'Failed to copy', variant: 'destructive' });
+    }
+  };
   const [formData, setFormData] = useState({
     title: existingListing?.title || '',
     description: existingListing?.description || '',
@@ -183,7 +195,25 @@ const ListingForm = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="title">Title</Label>
+                {formData.title && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 text-xs"
+                    onClick={() => copyToClipboard(formData.title, 'Title')}
+                  >
+                    {copiedField === 'Title' ? (
+                      <Check className="h-3 w-3 text-success" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                    Copy
+                  </Button>
+                )}
+              </div>
               <Input
                 id="title"
                 value={formData.title}
@@ -196,12 +226,30 @@ const ListingForm = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="description">Description</Label>
-                <AIDescriptionGenerator
-                  title={formData.title}
-                  category={formData.category}
-                  currentDescription={formData.description}
-                  onDescriptionGenerated={(desc) => setFormData({ ...formData, description: desc })}
-                />
+                <div className="flex items-center gap-1">
+                  {formData.description && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1 text-xs"
+                      onClick={() => copyToClipboard(formData.description, 'Description')}
+                    >
+                      {copiedField === 'Description' ? (
+                        <Check className="h-3 w-3 text-success" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
+                      Copy
+                    </Button>
+                  )}
+                  <AIDescriptionGenerator
+                    title={formData.title}
+                    category={formData.category}
+                    currentDescription={formData.description}
+                    onDescriptionGenerated={(desc) => setFormData({ ...formData, description: desc })}
+                  />
+                </div>
               </div>
               <Textarea
                 id="description"
