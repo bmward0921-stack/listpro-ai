@@ -1,11 +1,14 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Camera, Upload, Loader2, Scan, X } from 'lucide-react';
+import { Camera, Upload, Loader2, Scan, X, Library } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useProductLibrary } from '@/hooks/useProductLibrary';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
-interface ProductDetails {
+export interface ProductDetails {
   title: string;
   category: string;
   description: string;
@@ -14,6 +17,7 @@ interface ProductDetails {
   condition: string;
   color: string;
   keywords: string[];
+  imageUrl?: string;
 }
 
 interface ProductImageAnalyzerProps {
@@ -21,10 +25,12 @@ interface ProductImageAnalyzerProps {
 }
 
 const ProductImageAnalyzer = ({ onProductDetected }: ProductImageAnalyzerProps) => {
+  const { saveToLibrary } = useProductLibrary();
   const [open, setOpen] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [saveToLib, setSaveToLib] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -110,10 +116,30 @@ const ProductImageAnalyzer = ({ onProductDetected }: ProductImageAnalyzerProps) 
       if (error) throw error;
 
       if (data && !data.error) {
-        onProductDetected(data);
+        const productDetails: ProductDetails = {
+          ...data,
+          imageUrl: previewUrl,
+        };
+        
+        // Save to library if checkbox is checked
+        if (saveToLib) {
+          await saveToLibrary({
+            title: data.title,
+            description: data.description,
+            category: data.category,
+            suggested_price: data.suggestedPrice,
+            brand: data.brand,
+            condition: data.condition,
+            color: data.color,
+            keywords: data.keywords,
+            image_url: previewUrl,
+          });
+        }
+        
+        onProductDetected(productDetails);
         toast({
           title: 'Product Identified!',
-          description: `Detected: ${data.title}`,
+          description: `Detected: ${data.title}${saveToLib ? ' (saved to library)' : ''}`,
         });
         handleClose();
       } else {
@@ -236,23 +262,36 @@ const ProductImageAnalyzer = ({ onProductDetected }: ProductImageAnalyzerProps) 
           )}
 
           {previewUrl && !analyzing && (
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => setPreviewUrl(null)}
-              >
-                Retake
-              </Button>
-              <Button
-                type="button"
-                className="flex-1 gap-2"
-                onClick={analyzeImage}
-              >
-                <Scan className="h-4 w-4" />
-                Analyze
-              </Button>
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="save-to-library" 
+                  checked={saveToLib}
+                  onCheckedChange={(checked) => setSaveToLib(checked as boolean)}
+                />
+                <Label htmlFor="save-to-library" className="flex items-center gap-1 text-sm">
+                  <Library className="h-3 w-3" />
+                  Save to library
+                </Label>
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setPreviewUrl(null)}
+                >
+                  Retake
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1 gap-2"
+                  onClick={analyzeImage}
+                >
+                  <Scan className="h-4 w-4" />
+                  Analyze
+                </Button>
+              </div>
             </div>
           )}
 

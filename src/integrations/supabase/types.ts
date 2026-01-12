@@ -116,6 +116,54 @@ export type Database = {
         }
         Relationships: []
       }
+      product_library: {
+        Row: {
+          brand: string | null
+          category: string | null
+          color: string | null
+          condition: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          keywords: string[] | null
+          suggested_price: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand?: string | null
+          category?: string | null
+          color?: string | null
+          condition?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          keywords?: string[] | null
+          suggested_price?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand?: string | null
+          category?: string | null
+          color?: string | null
+          condition?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          keywords?: string[] | null
+          suggested_price?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_settings: {
         Row: {
           created_at: string

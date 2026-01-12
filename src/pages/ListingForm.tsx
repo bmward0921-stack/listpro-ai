@@ -23,6 +23,8 @@ import MultiImageUpload from '@/components/MultiImageUpload';
 import { getPrimaryImage } from '@/types/listing';
 import AIDescriptionGenerator from '@/components/AIDescriptionGenerator';
 import ProductImageAnalyzer from '@/components/ProductImageAnalyzer';
+import ProductLibraryPicker from '@/components/ProductLibraryPicker';
+import { ProductTemplate } from '@/hooks/useProductLibrary';
 
 const PLATFORMS: Platform[] = ['facebook', 'poshmark', 'squarespace'];
 
@@ -138,26 +140,46 @@ const ListingForm = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle>Product Details</CardTitle>
-            <ProductImageAnalyzer
-              onProductDetected={(details) => {
-                setFormData(prev => ({
-                  ...prev,
-                  title: details.title || prev.title,
-                  description: details.description || prev.description,
-                  category: details.category || prev.category,
-                }));
-                // Set suggested price on first enabled platform
-                if (details.suggestedPrice) {
-                  const firstEnabled = PLATFORMS.find(p => platformSettings[p].enabled);
-                  if (firstEnabled) {
-                    setPlatformSettings(prev => ({
-                      ...prev,
-                      [firstEnabled]: { ...prev[firstEnabled], price: details.suggestedPrice }
-                    }));
+            <div className="flex gap-2">
+              <ProductLibraryPicker
+                onSelect={(template: ProductTemplate) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    title: template.title || prev.title,
+                    description: template.description || prev.description,
+                    category: template.category || prev.category,
+                  }));
+                  if (template.suggested_price) {
+                    const firstEnabled = PLATFORMS.find(p => platformSettings[p].enabled);
+                    if (firstEnabled) {
+                      setPlatformSettings(prev => ({
+                        ...prev,
+                        [firstEnabled]: { ...prev[firstEnabled], price: template.suggested_price || 0 }
+                      }));
+                    }
                   }
-                }
-              }}
-            />
+                }}
+              />
+              <ProductImageAnalyzer
+                onProductDetected={(details) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    title: details.title || prev.title,
+                    description: details.description || prev.description,
+                    category: details.category || prev.category,
+                  }));
+                  if (details.suggestedPrice) {
+                    const firstEnabled = PLATFORMS.find(p => platformSettings[p].enabled);
+                    if (firstEnabled) {
+                      setPlatformSettings(prev => ({
+                        ...prev,
+                        [firstEnabled]: { ...prev[firstEnabled], price: details.suggestedPrice }
+                      }));
+                    }
+                  }
+                }}
+              />
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
