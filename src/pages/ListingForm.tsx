@@ -22,6 +22,7 @@ import { Link } from 'react-router-dom';
 import MultiImageUpload from '@/components/MultiImageUpload';
 import { getPrimaryImage } from '@/types/listing';
 import AIDescriptionGenerator from '@/components/AIDescriptionGenerator';
+import ProductImageAnalyzer from '@/components/ProductImageAnalyzer';
 
 const PLATFORMS: Platform[] = ['facebook', 'poshmark', 'squarespace'];
 
@@ -135,8 +136,28 @@ const ListingForm = () => {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Product Details */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle>Product Details</CardTitle>
+            <ProductImageAnalyzer
+              onProductDetected={(details) => {
+                setFormData(prev => ({
+                  ...prev,
+                  title: details.title || prev.title,
+                  description: details.description || prev.description,
+                  category: details.category || prev.category,
+                }));
+                // Set suggested price on first enabled platform
+                if (details.suggestedPrice) {
+                  const firstEnabled = PLATFORMS.find(p => platformSettings[p].enabled);
+                  if (firstEnabled) {
+                    setPlatformSettings(prev => ({
+                      ...prev,
+                      [firstEnabled]: { ...prev[firstEnabled], price: details.suggestedPrice }
+                    }));
+                  }
+                }
+              }}
+            />
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
