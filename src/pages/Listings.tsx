@@ -43,6 +43,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
+import ListingsSkeleton from '@/components/skeletons/ListingsSkeleton';
 
 const Listings = () => {
   const { listings, loading, deleteListing, updatePlatformStatus } = useListings();
@@ -92,11 +93,7 @@ const Listings = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
+    return <ListingsSkeleton />;
   }
 
   return (

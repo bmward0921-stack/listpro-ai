@@ -17,6 +17,7 @@ import { useListings } from "@/hooks/useListings";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPrimaryImage, PLATFORM_LABELS, Platform } from "@/types/listing";
 import StatusBadge from "@/components/StatusBadge";
+import IndexSkeleton from "@/components/skeletons/IndexSkeleton";
 
 const platformStyles: Record<Platform, string> = {
   facebook: "bg-info text-info-foreground",
@@ -215,9 +216,7 @@ const Index = () => {
             </div>
 
             {loading ? (
-              <div className="flex h-32 items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              </div>
+              <IndexSkeleton />
             ) : recentListings.length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-12">

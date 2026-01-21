@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Package, TrendingUp, DollarSign, ShoppingBag, Receipt } from 'lucide-react';
 import { PLATFORM_LABELS, Platform } from '@/types/listing';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import DashboardSkeleton from '@/components/skeletons/DashboardSkeleton';
 
 const PLATFORM_COLORS: Record<Platform, string> = {
   facebook: 'hsl(210, 70%, 50%)',
@@ -27,11 +28,7 @@ const Dashboard = () => {
   }));
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
