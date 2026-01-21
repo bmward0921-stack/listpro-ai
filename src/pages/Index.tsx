@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { ExternalLink, Plus, Package, ArrowRight, Search, X } from "lucide-react";
 import BatchImageAnalyzer, { ProductDetails } from "@/components/BatchImageAnalyzer";
@@ -18,6 +18,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getPrimaryImage, PLATFORM_LABELS, Platform } from "@/types/listing";
 import StatusBadge from "@/components/StatusBadge";
 import IndexSkeleton from "@/components/skeletons/IndexSkeleton";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { PullToRefreshContainer, PullToRefreshIndicator } from "@/components/PullToRefresh";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const platformStyles: Record<Platform, string> = {
   facebook: "bg-info text-info-foreground",
@@ -51,10 +54,26 @@ const externalPlatforms = [
 
 const Index = () => {
   const { user } = useAuth();
-  const { listings, loading } = useListings();
+  const { listings, loading, fetchListings } = useListings();
   const [search, setSearch] = useState("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isMobile = useIsMobile();
+  
+  // Pull to refresh
+  const handleRefresh = useCallback(async () => {
+    await fetchListings();
+  }, [fetchListings]);
+
+  const {
+    containerRef,
+    pullDistance,
+    isRefreshing,
+    progress,
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: !isMobile,
+  });
   
   // Custom platform state
   const [showOtherDialog, setShowOtherDialog] = useState(false);
@@ -133,7 +152,12 @@ const Index = () => {
   const recentListings = filteredListings.slice(0, 6);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <PullToRefreshContainer ref={containerRef} className="flex min-h-screen flex-col bg-background">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        progress={progress}
+      />
       {/* Hidden file input */}
       <input
         type="file"
@@ -420,7 +444,7 @@ const Index = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 
