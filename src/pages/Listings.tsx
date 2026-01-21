@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useListings } from '@/hooks/useListings';
 import { Button } from '@/components/ui/button';
@@ -44,13 +44,32 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import ListingsSkeleton from '@/components/skeletons/ListingsSkeleton';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { PullToRefreshContainer, PullToRefreshIndicator } from '@/components/PullToRefresh';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Listings = () => {
-  const { listings, loading, deleteListing, updatePlatformStatus } = useListings();
+  const { listings, loading, deleteListing, updatePlatformStatus, fetchListings } = useListings();
   const [search, setSearch] = useState('');
   const [platformFilter, setPlatformFilter] = useState<Platform | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState<ListingStatus | 'all'>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const isMobile = useIsMobile();
+
+  // Pull to refresh
+  const handleRefresh = useCallback(async () => {
+    await fetchListings();
+  }, [fetchListings]);
+
+  const {
+    containerRef,
+    pullDistance,
+    isRefreshing,
+    progress,
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    disabled: !isMobile,
+  });
 
   const filteredListings = listings.filter(listing => {
     const matchesSearch = listing.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -97,7 +116,12 @@ const Listings = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <PullToRefreshContainer ref={containerRef} className="space-y-6 pb-20 md:pb-6">
+      <PullToRefreshIndicator
+        pullDistance={pullDistance}
+        isRefreshing={isRefreshing}
+        progress={progress}
+      />
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -309,7 +333,7 @@ const Listings = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </PullToRefreshContainer>
   );
 };
 
