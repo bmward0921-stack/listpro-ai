@@ -42,6 +42,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
+import ListingDetailSkeleton from '@/components/skeletons/ListingDetailSkeleton';
 
 const ListingDetail = () => {
   const { id } = useParams();
@@ -103,11 +104,7 @@ const ListingDetail = () => {
   };
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
+    return <ListingDetailSkeleton />;
   }
 
   if (!listing) {

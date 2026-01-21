@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 import { TrendingUp, DollarSign, Percent, ShoppingBag, Receipt } from 'lucide-react';
 import StatCard from '@/components/ui/stat-card';
-
+import AnalyticsSkeleton from '@/components/skeletons/AnalyticsSkeleton';
 const PLATFORM_COLORS: Record<Platform, string> = {
   facebook: 'hsl(210, 70%, 50%)',
   poshmark: 'hsl(0, 65%, 40%)',
@@ -96,11 +96,7 @@ const Analytics = () => {
     : 0;
 
   if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
+    return <AnalyticsSkeleton />;
   }
 
   return (
