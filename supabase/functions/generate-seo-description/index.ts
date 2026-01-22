@@ -7,11 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Input validation schema
+// Input validation schema - now includes optional imageUrl
 const GenerateDescSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
   category: z.string().max(100, "Category too long").optional(),
   currentDescription: z.string().max(5000, "Description too long").optional(),
+  imageUrl: z.string().optional(),
 });
 
 serve(async (req) => {
@@ -60,7 +61,7 @@ serve(async (req) => {
       );
     }
 
-    const { title, category, currentDescription } = validated;
+    const { title, category, currentDescription, imageUrl } = validated;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -78,7 +79,9 @@ serve(async (req) => {
 7. Use bullet points sparingly for key features
 8. End with a subtle call-to-action
 
-Write in a professional yet approachable tone. Focus on what makes the item special and why buyers should act now.`;
+Write in a professional yet approachable tone. Focus on what makes the item special and why buyers should act now.
+
+${imageUrl ? 'You will be provided with a product image. Analyze it carefully to identify colors, materials, brand markings, condition, style, and any unique features to incorporate into the description.' : ''}`;
 
     const userPrompt = `Create an SEO-optimized product description for:
 
@@ -88,6 +91,24 @@ ${currentDescription ? `Current Description (use as reference): ${currentDescrip
 
 Generate a compelling, SEO-friendly description that will help this item rank well and convert browsers into buyers.`;
 
+    // Build messages array - include image if provided
+    const messages: Array<{ role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> }> = [
+      { role: "system", content: systemPrompt },
+    ];
+
+    if (imageUrl) {
+      // Use multimodal message with image
+      messages.push({
+        role: "user",
+        content: [
+          { type: "text", text: userPrompt },
+          { type: "image_url", image_url: { url: imageUrl } },
+        ],
+      });
+    } else {
+      messages.push({ role: "user", content: userPrompt });
+    }
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -96,10 +117,7 @@ Generate a compelling, SEO-friendly description that will help this item rank we
       },
       body: JSON.stringify({
         model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+        messages,
       }),
     });
 
