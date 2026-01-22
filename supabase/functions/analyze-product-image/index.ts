@@ -1,9 +1,23 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const AnalyzeImageSchema = z.object({
+  imageUrl: z.string()
+    .min(1, "Image URL is required")
+    .max(10_000_000, "Image URL too large") // 10MB limit for data URLs
+    .refine(
+      (url) => url.startsWith('data:image/') || 
+               /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url),
+      'Invalid image URL format - must be a data URL or valid image URL'
+    ),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,15 +25,51 @@ serve(async (req) => {
   }
 
   try {
-    const { imageUrl } = await req.json();
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Input validation
+    let validated;
+    try {
+      const body = await req.json();
+      validated = AnalyzeImageSchema.parse(body);
+    } catch (validationError) {
+      const errorMessage = validationError instanceof z.ZodError 
+        ? validationError.errors.map(e => e.message).join(', ')
+        : 'Invalid input';
+      return new Response(
+        JSON.stringify({ error: errorMessage }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { imageUrl } = validated;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
-    }
-
-    if (!imageUrl) {
-      throw new Error("Image URL is required");
     }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -73,8 +123,7 @@ Only return valid JSON, no markdown or explanation.`
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("AI gateway error:", response.status);
       throw new Error("Failed to analyze image");
     }
 
@@ -89,7 +138,7 @@ Only return valid JSON, no markdown or explanation.`
       const jsonStr = jsonMatch ? jsonMatch[1] : content;
       productData = JSON.parse(jsonStr.trim());
     } catch (parseError) {
-      console.error("Failed to parse AI response:", content);
+      console.error("Failed to parse AI response");
       throw new Error("Failed to parse product details");
     }
 

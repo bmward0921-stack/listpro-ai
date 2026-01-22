@@ -1,9 +1,18 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Input validation schema
+const GenerateDescSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200, "Title too long"),
+  category: z.string().max(100, "Category too long").optional(),
+  currentDescription: z.string().max(5000, "Description too long").optional(),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,7 +20,47 @@ serve(async (req) => {
   }
 
   try {
-    const { title, category, currentDescription } = await req.json();
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Input validation
+    let validated;
+    try {
+      const body = await req.json();
+      validated = GenerateDescSchema.parse(body);
+    } catch (validationError) {
+      const errorMessage = validationError instanceof z.ZodError 
+        ? validationError.errors.map(e => e.message).join(', ')
+        : 'Invalid input';
+      return new Response(
+        JSON.stringify({ error: errorMessage }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const { title, category, currentDescription } = validated;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -67,8 +116,7 @@ Generate a compelling, SEO-friendly description that will help this item rank we
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("AI gateway error:", response.status);
       throw new Error("Failed to generate description");
     }
 

@@ -1,9 +1,19 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const SuggestPriceSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200, "Title too long"),
+  category: z.string().max(100, "Category too long").optional(),
+  description: z.string().max(5000, "Description too long").optional(),
+  zipCode: z.string().regex(/^\d{5}(-\d{4})?$/, "Invalid zip code format").optional().or(z.literal('')),
+});
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -12,14 +22,47 @@ serve(async (req) => {
   }
 
   try {
-    const { title, category, description, zipCode } = await req.json();
-
-    if (!title) {
+    // Authentication check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
-        JSON.stringify({ error: 'Product title is required' }),
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid or expired token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Input validation
+    let validated;
+    try {
+      const body = await req.json();
+      validated = SuggestPriceSchema.parse(body);
+    } catch (validationError) {
+      const errorMessage = validationError instanceof z.ZodError 
+        ? validationError.errors.map(e => e.message).join(', ')
+        : 'Invalid input';
+      return new Response(
+        JSON.stringify({ error: errorMessage }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const { title, category, description, zipCode } = validated;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
@@ -139,8 +182,7 @@ Also consider the zip code region for local market adjustments if provided.`;
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("AI gateway error:", response.status);
       return new Response(
         JSON.stringify({ error: "Failed to get price suggestions" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -148,7 +190,7 @@ Also consider the zip code region for local market adjustments if provided.`;
     }
 
     const data = await response.json();
-    console.log("AI response received:", JSON.stringify(data));
+    console.log("AI response received");
 
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) {
@@ -160,7 +202,7 @@ Also consider the zip code region for local market adjustments if provided.`;
     }
 
     const suggestions = JSON.parse(toolCall.function.arguments);
-    console.log("Price suggestions:", suggestions);
+    console.log("Price suggestions generated");
 
     return new Response(
       JSON.stringify(suggestions),
