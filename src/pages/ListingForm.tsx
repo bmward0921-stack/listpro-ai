@@ -293,6 +293,7 @@ const ListingForm = () => {
                     category={formData.category}
                     currentDescription={formData.description}
                     onDescriptionGenerated={(desc) => setFormData({ ...formData, description: desc })}
+                    imageUrl={formData.images.length > 0 ? formData.images[0] : undefined}
                   />
                 </div>
               </div>

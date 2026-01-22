@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Image } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -9,6 +9,7 @@ interface AIDescriptionGeneratorProps {
   category: string;
   currentDescription: string;
   onDescriptionGenerated: (description: string) => void;
+  imageUrl?: string; // Optional image URL to analyze for better descriptions
 }
 
 const AIDescriptionGenerator = ({
@@ -16,6 +17,7 @@ const AIDescriptionGenerator = ({
   category,
   currentDescription,
   onDescriptionGenerated,
+  imageUrl,
 }: AIDescriptionGeneratorProps) => {
   const [generating, setGenerating] = useState(false);
 
@@ -33,7 +35,7 @@ const AIDescriptionGenerator = ({
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-seo-description', {
-        body: { title, category, currentDescription },
+        body: { title, category, currentDescription, imageUrl },
       });
 
       if (error) throw error;
@@ -42,7 +44,9 @@ const AIDescriptionGenerator = ({
         onDescriptionGenerated(data.description);
         toast({
           title: 'Description Generated',
-          description: 'SEO-optimized description has been created.',
+          description: imageUrl 
+            ? 'SEO-optimized description created from image analysis.'
+            : 'SEO-optimized description has been created.',
         });
       } else {
         throw new Error('No description received');
@@ -58,6 +62,8 @@ const AIDescriptionGenerator = ({
       setGenerating(false);
     }
   };
+
+  const hasImage = !!imageUrl;
 
   return (
     <Button
@@ -75,8 +81,12 @@ const AIDescriptionGenerator = ({
         </>
       ) : (
         <>
-          <Sparkles className="h-4 w-4" />
-          AI SEO Description
+          {hasImage ? (
+            <Image className="h-4 w-4" />
+          ) : (
+            <Sparkles className="h-4 w-4" />
+          )}
+          {hasImage ? 'AI from Image' : 'AI SEO Description'}
         </>
       )}
     </Button>
