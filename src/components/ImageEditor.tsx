@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Canvas as FabricCanvas, FabricImage, filters } from 'fabric';
+import { Canvas as FabricCanvas, FabricImage, filters, Rect } from 'fabric';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { RotateCw, RotateCcw, Crop, Check, X, FlipHorizontal, FlipVertical, ZoomIn, ZoomOut, Undo2, Redo2, Sun, Contrast, Palette, RotateCcwSquare } from 'lucide-react';
