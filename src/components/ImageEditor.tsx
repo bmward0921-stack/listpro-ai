@@ -402,7 +402,7 @@ const ImageEditor = ({ imageUrl, onSave, onCancel }: ImageEditorProps) => {
       setIsCropping(true);
       
       // Create a rectangle for crop selection
-      const { Rect } = require('fabric');
+      // Rect imported from 'fabric' at top of file
       const canvasWidth = fabricCanvas.width!;
       const canvasHeight = fabricCanvas.height!;
       
