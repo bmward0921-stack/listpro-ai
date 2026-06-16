@@ -12,7 +12,16 @@ const GenerateDescSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title too long"),
   category: z.string().max(100, "Category too long").optional(),
   currentDescription: z.string().max(5000, "Description too long").optional(),
-  imageUrl: z.string().optional(),
+  imageUrl: z
+    .string()
+    .max(10_000_000, "Image URL too large")
+    .refine(
+      (url) =>
+        url.startsWith("data:image/") ||
+        /^https?:\/\/.+\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url),
+      "Invalid image URL format - must be a data URL or valid http(s) image URL"
+    )
+    .optional(),
 });
 
 serve(async (req) => {

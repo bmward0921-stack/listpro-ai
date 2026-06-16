@@ -518,78 +518,14 @@ const AdminSettings = () => {
         {/* Access Control */}
         <TabsContent value="access" className="space-y-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>User Access</CardTitle>
-                <CardDescription>
-                  Manage who can access and edit listings
-                </CardDescription>
-              </div>
-              <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add User
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add User Access</DialogTitle>
-                    <DialogDescription>
-                      Grant access to a team member by their email
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="newUserEmail">Email Address</Label>
-                      <Input
-                        id="newUserEmail"
-                        type="email"
-                        value={newUserEmail}
-                        onChange={(e) => setNewUserEmail(e.target.value)}
-                        placeholder="team@example.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="newUserRole">Role</Label>
-                      <Select value={newUserRole} onValueChange={(v: 'admin' | 'editor' | 'viewer') => setNewUserRole(v)}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="viewer">
-                            <div className="flex items-center gap-2">
-                              <Eye className="h-4 w-4" />
-                              Viewer (Read Only)
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="editor">
-                            <div className="flex items-center gap-2">
-                              <Edit className="h-4 w-4" />
-                              Editor (Create/Edit)
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="admin">
-                            <div className="flex items-center gap-2">
-                              <Shield className="h-4 w-4" />
-                              Admin (Full Access)
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setUserDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={addUser}>Add User</Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+            <CardHeader>
+              <CardTitle>User Access</CardTitle>
+              <CardDescription>
+                Roles are enforced server-side via the database
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="rounded-lg border border-border bg-muted/30 p-4 mb-4">
+            <CardContent className="space-y-4">
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
                 <div className="flex items-start gap-3">
                   <Users className="mt-0.5 h-5 w-5 text-primary" />
                   <div>
@@ -600,53 +536,22 @@ const AdminSettings = () => {
                   </div>
                 </div>
               </div>
-
-              {settings.userAccess.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead className="w-[80px] text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {settings.userAccess.map((ua) => (
-                      <TableRow key={ua.email}>
-                        <TableCell>{ua.email}</TableCell>
-                        <TableCell>
-                          <Select 
-                            value={ua.role} 
-                            onValueChange={(v: 'admin' | 'editor' | 'viewer') => updateUserRole(ua.email, v)}
-                          >
-                            <SelectTrigger className="w-[180px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="viewer">Viewer</SelectItem>
-                              <SelectItem value="editor">Editor</SelectItem>
-                              <SelectItem value="admin">Admin</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeUser(ua.email)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-6">
-                  No additional users added yet
-                </p>
-              )}
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+                <div className="flex items-start gap-3">
+                  <Shield className="mt-0.5 h-5 w-5 text-destructive" />
+                  <div className="space-y-1">
+                    <p className="font-medium">Access is managed in the backend</p>
+                    <p className="text-sm text-muted-foreground">
+                      User roles (admin, editor, viewer) are stored in the
+                      <code className="mx-1 rounded bg-muted px-1">user_roles</code>
+                      table and enforced by row-level security. To grant or
+                      revoke access for a team member, update their row in the
+                      backend — adding emails here would be cosmetic only and
+                      would not change actual permissions.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
