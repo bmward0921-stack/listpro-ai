@@ -1,3 +1,4 @@
+import PageHead from '@/components/PageHead';
 import { useListings, useListingStats } from '@/hooks/useListings';
 import { useActivityLog } from '@/hooks/useActivityLog';
 import StatCard from '@/components/ui/stat-card';
@@ -33,6 +34,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
+      <PageHead title="Dashboard | StockSync" description="Overview of your multi-platform listings, recent activity, and key inventory stats across Facebook, Poshmark, and eBay." path="/" />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Dashboard</h1>

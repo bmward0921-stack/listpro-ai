@@ -1,3 +1,4 @@
+import PageHead from '@/components/PageHead';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useListings } from '@/hooks/useListings';
 import { useActivityLog } from '@/hooks/useActivityLog';
@@ -134,6 +135,8 @@ const ListingDetail = () => {
   const profitMargin = totalGrossRevenue > 0 ? ((profit / totalGrossRevenue) * 100).toFixed(1) : '0';
 
   return (
+    <>
+      <PageHead title={`${listing?.title || 'Listing'} | StockSync`} description={`Details, platform statuses, and activity for ${listing?.title || 'this listing'} on StockSync.`} path={`/listings/${id ?? ''}`} />
     <div 
       className="mx-auto max-w-4xl space-y-6"
       style={{

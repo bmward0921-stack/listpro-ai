@@ -1,3 +1,4 @@
+import PageHead from '@/components/PageHead';
 import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useListings } from '@/hooks/useListings';
@@ -117,6 +118,7 @@ const Listings = () => {
 
   return (
     <PullToRefreshContainer ref={containerRef} className="space-y-6 pb-20 md:pb-6">
+      <PageHead title="Listings | StockSync" description="Browse, search, and manage your inventory across every connected marketplace from a single dashboard." path="/listings" />
       <PullToRefreshIndicator
         pullDistance={pullDistance}
         isRefreshing={isRefreshing}
