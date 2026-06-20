@@ -1,3 +1,4 @@
+import PageHead from '@/components/PageHead';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -59,6 +60,7 @@ const Install = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <PageHead title="Install StockSync | PWA Setup" description="Install StockSync as a Progressive Web App on iOS, Android, or desktop for fast, offline-ready inventory access." path="/install" />
       {/* Header */}
       <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
         <div className="flex h-14 items-center px-4">

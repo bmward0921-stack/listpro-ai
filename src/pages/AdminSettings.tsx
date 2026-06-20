@@ -1,3 +1,4 @@
+import PageHead from '@/components/PageHead';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -269,6 +270,7 @@ const AdminSettings = () => {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      <PageHead title="Admin | ListPro.AI" description="Admin-only configuration for roles, security policies, and integrations." path="/admin" />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>

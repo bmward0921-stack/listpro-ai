@@ -1,3 +1,4 @@
+import PageHead from '@/components/PageHead';
 import { useListings, useListingStats } from '@/hooks/useListings';
 import { useAdminSettings } from '@/hooks/useAdminSettings';
 import { PLATFORM_LABELS, Platform } from '@/types/listing';
@@ -101,6 +102,7 @@ const Analytics = () => {
 
   return (
     <div className="space-y-8">
+      <PageHead title="Analytics | ListPro.AI" description="Track revenue, fees, and sales performance across every marketplace you sell on." path="/analytics" />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Analytics</h1>

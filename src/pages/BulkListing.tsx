@@ -1,3 +1,4 @@
+import PageHead from '@/components/PageHead';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -63,6 +64,7 @@ const BulkListing = () => {
 
   return (
     <div className="space-y-6">
+      <PageHead title="Bulk List | ListPro.AI" description="Queue and publish multiple inventory items across Facebook, Poshmark, and eBay in a single batch." path="/bulk" />
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>

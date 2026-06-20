@@ -53,6 +53,7 @@ const ImageGallery = ({ images, alt = 'Product image', className }: ImageGallery
             <Button
               variant="secondary"
               size="icon"
+              aria-label="Previous image"
               className="absolute left-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full opacity-0 transition-opacity hover:opacity-100 group-hover:opacity-100 [.group:hover_&]:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
@@ -64,6 +65,7 @@ const ImageGallery = ({ images, alt = 'Product image', className }: ImageGallery
             <Button
               variant="secondary"
               size="icon"
+              aria-label="Next image"
               className="absolute right-2 top-1/2 h-8 w-8 -translate-y-1/2 rounded-full opacity-0 transition-opacity hover:opacity-100 group-hover:opacity-100 [.group:hover_&]:opacity-100"
               onClick={(e) => {
                 e.stopPropagation();
@@ -122,6 +124,7 @@ const ImageGallery = ({ images, alt = 'Product image', className }: ImageGallery
           <Button
             variant="ghost"
             size="icon"
+            aria-label="Close image viewer"
             className="absolute right-4 top-4 z-50"
             onClick={() => setLightboxOpen(false)}
           >
@@ -146,6 +149,7 @@ const ImageGallery = ({ images, alt = 'Product image', className }: ImageGallery
                 <Button
                   variant="secondary"
                   size="icon"
+                  aria-label="Previous image"
                   className="absolute left-0 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full"
                   onClick={handlePrevious}
                 >
@@ -154,6 +158,7 @@ const ImageGallery = ({ images, alt = 'Product image', className }: ImageGallery
                 <Button
                   variant="secondary"
                   size="icon"
+                  aria-label="Next image"
                   className="absolute right-0 top-1/2 h-10 w-10 -translate-y-1/2 rounded-full"
                   onClick={handleNext}
                 >

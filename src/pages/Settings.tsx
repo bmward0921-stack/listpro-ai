@@ -1,3 +1,4 @@
+import PageHead from '@/components/PageHead';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -91,6 +92,7 @@ const Settings = () => {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <PageHead title="Settings | StockSync" description="Manage your team preferences, default platforms, currency, notifications, and listing templates." path="/settings" />
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>

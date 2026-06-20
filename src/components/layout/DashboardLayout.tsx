@@ -57,6 +57,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               size="icon"
               className="lg:hidden"
               onClick={() => setSidebarOpen(!sidebarOpen)}
+              aria-label={sidebarOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={sidebarOpen}
             >
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -91,6 +93,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               size="icon"
               onClick={handleLogout}
               title="Sign out"
+              aria-label="Sign out"
             >
               <LogOut className="h-5 w-5" />
             </Button>

@@ -1,3 +1,4 @@
+import PageHead from '@/components/PageHead';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -79,6 +80,7 @@ const Login = () => {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-900 via-primary/20 to-slate-900 p-4">
+      <PageHead title="Sign In | StockSync" description="Sign in to StockSync to manage your multi-platform inventory and listings." path="/login" />
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -left-40 -top-40 h-80 w-80 animate-pulse rounded-full bg-primary/20 blur-3xl" />

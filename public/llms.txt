@@ -1,0 +1,10 @@
+# ListPro.AI
+
+> Multi-platform inventory and listing management for resellers. List items on Facebook Marketplace, Poshmark, eBay, and more from a single dashboard.
+
+ListPro.AI helps resellers track inventory, generate AI-powered SEO descriptions and price suggestions, and sync listings across multiple marketplaces.
+
+## Pages
+
+- [Home](/): Product overview and primary entry point.
+- [Install](/install): Instructions for installing ListPro.AI as a PWA on iOS, Android, and desktop.
